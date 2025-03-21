@@ -7,7 +7,7 @@ Sets up the FastAPI application for BitcoinTX, a double-entry Bitcoin portfolio 
 Key Roles:
  - Loads environment variables & configures session-based authentication
  - Adds CORS middleware for frontend integration
- - Includes 'transaction', 'account', 'user', 'bitcoin', and calculation routers
+ - Includes 'transaction', 'account', 'user', 'bitcoin', calculation, and reports routers
  - Serves the Vite frontend static files for SPA routing
 """
 
@@ -109,7 +109,8 @@ app.include_router(bitcoin.router, prefix="/api", tags=["Bitcoin"])
 # add it here:
 try:
     from backend.routers.reports import reports_router
-    app.include_router(reports_router, prefix="/reports", tags=["reports"])
+    # Changed prefix="/reports" -> prefix="/api/reports" for consistency
+    app.include_router(reports_router, prefix="/api/reports", tags=["reports"])
 except ImportError:
     print("WARNING: Could not import 'reports_router'. Make sure 'backend/routers/reports.py' exists.")
 
