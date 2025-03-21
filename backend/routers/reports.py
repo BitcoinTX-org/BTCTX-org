@@ -1,4 +1,4 @@
-# backend/routers/reports.py
+# FILE: backend/routers/reports.py
 
 from fastapi import APIRouter, Depends, Response, HTTPException
 from sqlalchemy.orm import Session
@@ -15,7 +15,11 @@ from backend.services.reports.complete_tax_report import generate_comprehensive_
 # from backend.services.reports.ScheduleD import generate_schedule_d_pdf
 # etc.
 
+# NEW IMPORT for transaction_history.py
+from backend.services.reports.transaction_history import generate_transaction_history_report
+
 reports_router = APIRouter()
+
 
 @reports_router.get("/comprehensive_tax")
 def get_comprehensive_tax(
@@ -29,14 +33,17 @@ def get_comprehensive_tax(
     """
     # 1) aggregator logic
     #    If your aggregator needs `user_id`, pass it in (not shown in the snippet).
-    report_dict = generate_report_data(db, year)  
+    report_dict = generate_report_data(db, year)
 
     # 2) Generate PDF using your complete_tax_report.py
     pdf_bytes = generate_comprehensive_tax_report(report_dict)
 
     # 3) Return PDF
-    return Response(content=pdf_bytes, media_type="application/pdf",
-                    headers={"Content-Disposition": "attachment; filename=CompleteTaxReport.pdf"})
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={"Content-Disposition": "attachment; filename=CompleteTaxReport.pdf"}
+    )
 
 
 @reports_router.get("/form_8949")
@@ -50,14 +57,17 @@ def get_form_8949_report(
     """
     # aggregator data
     report_dict = generate_report_data(db, year)
-    
+
     # If you have a specialized function:
     # pdf_content = generate_8949_pdf(report_dict)
     # For now, a placeholder:
     pdf_content = b"(Placeholder for 8949 PDF bytes)"
 
-    return Response(content=pdf_content, media_type="application/pdf",
-                    headers={"Content-Disposition": "attachment; filename=Form8949.pdf"})
+    return Response(
+        content=pdf_content,
+        media_type="application/pdf",
+        headers={"Content-Disposition": "attachment; filename=Form8949.pdf"}
+    )
 
 
 @reports_router.get("/schedule_d")
@@ -76,8 +86,11 @@ def get_schedule_d_report(
     # pdf_content = generate_schedule_d_pdf(report_dict)
     pdf_content = b"(Placeholder for Schedule D PDF)"
 
-    return Response(content=pdf_content, media_type="application/pdf",
-                    headers={"Content-Disposition": "attachment; filename=ScheduleD.pdf"})
+    return Response(
+        content=pdf_content,
+        media_type="application/pdf",
+        headers={"Content-Disposition": "attachment; filename=ScheduleD.pdf"}
+    )
 
 
 @reports_router.get("/turbotax_export")
@@ -88,17 +101,20 @@ def get_turbotax_export(
 ):
     """
     Exports a CSV with capital gains data in the TurboTax Online format.
-    Some devs produce a .txf for TurboTax Desktop. 
+    Some devs produce a .txf for TurboTax Desktop.
     """
     report_dict = generate_report_data(db, year)
-    
-    # Here, you'd build a CSV string. 
+
+    # Here, you'd build a CSV string.
     # Possibly something like:
     # csv_data = build_turbotax_csv(report_dict)
     csv_data = "date_acquired,date_sold,proceeds,cost_basis,gain,...\n(etc)"
 
-    return Response(content=csv_data, media_type="text/csv",
-                    headers={"Content-Disposition": "attachment; filename=TurboTax.csv"})
+    return Response(
+        content=csv_data,
+        media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=TurboTax.csv"}
+    )
 
 
 @reports_router.get("/turbotax_cddvd")
@@ -114,8 +130,11 @@ def get_turbotax_cd_dvd_export(
     # txf_str = build_txf_file(report_dict)
     txf_str = "(Placeholder TXF data)"
 
-    return Response(content=txf_str, media_type="text/plain",
-                    headers={"Content-Disposition": "attachment; filename=TurboTaxCD.txf"})
+    return Response(
+        content=txf_str,
+        media_type="text/plain",
+        headers={"Content-Disposition": "attachment; filename=TurboTaxCD.txf"}
+    )
 
 
 @reports_router.get("/taxact_export")
@@ -131,8 +150,11 @@ def get_taxact_export(
     # taxact_csv = build_taxact_csv(report_dict)
     taxact_csv = "transaction_date,disposal_date,cost_basis,proceeds,GainLoss\n(etc)"
 
-    return Response(content=taxact_csv, media_type="text/csv",
-                    headers={"Content-Disposition": "attachment; filename=TaxAct.csv"})
+    return Response(
+        content=taxact_csv,
+        media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=TaxAct.csv"}
+    )
 
 
 @reports_router.get("/capital_gains")
@@ -157,8 +179,11 @@ def get_capital_gains_report(
         f"Total,{gains['total']['proceeds']},{gains['total']['basis']},{gains['total']['gain']}\n"
     )
 
-    return Response(content=csv_data, media_type="text/csv",
-                    headers={"Content-Disposition": "attachment; filename=CapitalGains.csv"})
+    return Response(
+        content=csv_data,
+        media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=CapitalGains.csv"}
+    )
 
 
 @reports_router.get("/income")
@@ -177,8 +202,11 @@ def get_income_report(
         "Mining,Reward,Other,Total\n"
         f"{inc['Mining']},{inc['Reward']},{inc['Other']},{inc['Total']}\n"
     )
-    return Response(content=csv_data, media_type="text/csv",
-                    headers={"Content-Disposition": "attachment; filename=Income.csv"})
+    return Response(
+        content=csv_data,
+        media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=Income.csv"}
+    )
 
 
 @reports_router.get("/other_gains")
@@ -211,8 +239,11 @@ def get_gifts_donations_lost_report(
         lines.append(f"{row['date']},{row['asset']},{row['amount']},{row['value_usd']},{row['type']}")
     csv_data = "\n".join(lines)
 
-    return Response(content=csv_data, media_type="text/csv",
-                    headers={"Content-Disposition": "attachment; filename=GiftsDonations.csv"})
+    return Response(
+        content=csv_data,
+        media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=GiftsDonations.csv"}
+    )
 
 
 @reports_router.get("/expenses")
@@ -231,8 +262,11 @@ def get_expenses_report(
         lines.append(f"{row['date']},{row['asset']},{row['amount']},{row['value_usd']},{row['type']}")
     csv_data = "\n".join(lines)
 
-    return Response(content=csv_data, media_type="text/csv",
-                    headers={"Content-Disposition": "attachment; filename=Expenses.csv"})
+    return Response(
+        content=csv_data,
+        media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=Expenses.csv"}
+    )
 
 
 @reports_router.get("/beginning_year_holdings")
@@ -243,7 +277,7 @@ def get_beginning_of_year_holdings(
 ):
     """
     Typically the end_of_year_holdings from prior year is the beginning for this year.
-    But if you want a direct aggregator approach, you can build a new function 
+    But if you want a direct aggregator approach, you can build a new function
     that checks leftover lots as of Jan 1 of the current year.
     """
     # A placeholder approach: do the same aggregator, but you might do partial-lot re-lot
@@ -270,8 +304,11 @@ def get_end_of_year_holdings(
         )
     csv_data = "\n".join(lines)
 
-    return Response(content=csv_data, media_type="text/csv",
-                    headers={"Content-Disposition": "attachment; filename=EndOfYearBalances.csv"})
+    return Response(
+        content=csv_data,
+        media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=EndOfYearBalances.csv"}
+    )
 
 
 @reports_router.get("/highest_balance")
@@ -281,8 +318,8 @@ def get_highest_balance_report(
     db: Session = Depends(get_db),
 ):
     """
-    Koinly sometimes does a “Highest Balance” – 
-    you’d need to track daily or rolling max BTC quantity. 
+    Koinly sometimes does a “Highest Balance” –
+    you’d need to track daily or rolling max BTC quantity.
     We'll placeholder it.
     """
     return Response("(Placeholder) Highest Balance logic not yet implemented.")
@@ -295,7 +332,7 @@ def get_buy_sell_report(
     db: Session = Depends(get_db),
 ):
     """
-    Summarize all buy/sell transactions, ignoring transfers or deposits. 
+    Summarize all buy/sell transactions, ignoring transfers or deposits.
     Possibly CSV with date/time, cost basis, proceeds, etc.
     """
     return Response("(Placeholder) Not implemented.")
@@ -308,8 +345,8 @@ def get_ledger_balance_report(
     db: Session = Depends(get_db),
 ):
     """
-    Returns a breakdown of all ledger accounts or some 
-    net balance in the double-entry system, if you want. 
+    Returns a breakdown of all ledger accounts or some
+    net balance in the double-entry system, if you want.
     Placeholder.
     """
     return Response("(Placeholder) Not implemented.")
@@ -322,8 +359,8 @@ def get_balances_per_wallet_report(
     db: Session = Depends(get_db),
 ):
     """
-    Summarize account-by-account balances at year-end, 
-    or monthly, etc. 
+    Summarize account-by-account balances at year-end,
+    or monthly, etc.
     Placeholder.
     """
     return Response("(Placeholder) Not implemented.")
@@ -337,20 +374,60 @@ def get_transaction_history(
 ):
     """
     Full history of transactions within the year (or date range).
-    Could be a big CSV listing everything from 'generate_report_data' or 
-    a simpler function that just does a direct DB query 
+    Could be a big CSV listing everything from 'generate_report_data' or
+    a simpler function that just does a direct DB query
     with optional from_date/to_date.
+
+    Currently, it reuses aggregator or just queries partial aggregator data.
+    This is a placeholder that does not incorporate the direct transaction
+    history logic from transaction_history.py
     """
-    # Reuse aggregator or just query directly
     report_dict = generate_report_data(db, year)
-    all_txs = report_dict["capital_gains_transactions"] + report_dict["income_transactions"] 
+    all_txs = report_dict["capital_gains_transactions"] + report_dict["income_transactions"]
     # plus any others if you want a single big CSV
     lines = ["date,type,amount,asset,cost,proceeds,gain_loss,etc"]
-    # Your aggregator might not have a single “type” for each row, 
-    # so you'd unify it as you see fit. 
     # We'll just do a placeholder:
     lines.append("(Placeholder) Not fully integrated yet.")
     csv_data = "\n".join(lines)
 
-    return Response(content=csv_data, media_type="text/csv",
-                    headers={"Content-Disposition": "attachment; filename=TransactionHistory.csv"})
+    return Response(
+        content=csv_data,
+        media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=TransactionHistory.csv"}
+    )
+
+
+# -------------------------------------------------------------
+# NEW ROUTE: /transaction_history_export
+# -------------------------------------------------------------
+@reports_router.get("/transaction_history_export")
+def get_transaction_history_export(
+    year: int,
+    fmt: str = "PDF",
+    db: Session = Depends(get_db),
+):
+    """
+    A new route that generates the full transaction history (Deposit, Withdrawal,
+    Transfer, Buy, Sell) for the given year (including partial if current year),
+    returning either PDF or CSV as a direct download.
+
+    This calls generate_transaction_history_report(...) from
+    backend/services/reports/transaction_history.py
+    """
+    if fmt.upper() not in ("PDF", "CSV"):
+        raise HTTPException(status_code=400, detail="Format must be 'PDF' or 'CSV'")
+
+    report_output = generate_transaction_history_report(db, year, output_format=fmt)
+
+    if fmt.upper() == "PDF":
+        return Response(
+            content=report_output,
+            media_type="application/pdf",
+            headers={"Content-Disposition": "attachment; filename=TransactionHistory.pdf"}
+        )
+    else:
+        return Response(
+            content=report_output,
+            media_type="text/csv",
+            headers={"Content-Disposition": "attachment; filename=TransactionHistory.csv"}
+        )
