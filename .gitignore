@@ -87,8 +87,11 @@ Export_Tests/
 # --- Database Backups ---
 backups/
 
-# --- Modernization Baseline PDFs (scratch) ---
-baseline-pdfs/
+# --- Modernization Baseline PDFs (generated artifacts only; gate script and
+# frozen seed CSV are tracked) ---
+baseline-pdfs/*
+!baseline-pdfs/regen_and_diff.sh
+!baseline-pdfs/seed_template.csv
 
 # --- Desktop Build ---
 desktop/build/

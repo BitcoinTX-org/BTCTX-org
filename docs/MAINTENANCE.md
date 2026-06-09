@@ -3,7 +3,7 @@
 > This document provides procedures for maintaining BitcoinTX dependencies and addressing deprecations.
 > **Primary audience:** AI assistants (Claude) and developers performing maintenance tasks.
 
-**Last Reviewed:** 2025-01-17
+**Last Reviewed:** 2026-06-09 (full conservative update pass on `feature/2026-modernization`)
 
 ---
 
@@ -69,29 +69,46 @@ These packages follow semver well and rarely break:
 
 | Package | Current | Notes |
 |---------|---------|-------|
-| `pytest` | 8.3.5 | Test framework, isolated from production |
-| `python-dotenv` | 1.0.1 | Simple, stable API |
-| `python-dateutil` | 2.9.0 | Mature, stable |
-| `requests` | 2.32.0 | Very stable HTTP client |
-| `cryptography` | 44.0.2 | Security updates important |
+| `pytest` | 8.4.2 | Test framework, isolated from production. pytest 9 deferred (see below) |
+| `python-dotenv` | 1.2.2 | Simple, stable API (we only call `load_dotenv`) |
+| `python-dateutil` | 2.9.0.post0 | Mature, stable |
+| `requests` | 2.34.2 | Now exact-pinned (was `>=`) per pinning policy |
+| `cryptography` | 46.0.7 | Security updates important; 47/48 deferred (see below) |
 
 ### 🟡 Update with Caution (Check changelog first)
 
 | Package | Current | Risk Factor |
 |---------|---------|-------------|
-| `fastapi` | 0.115.8 | Check for Pydantic compatibility, Starlette version requirements |
-| `pydantic` | 2.12.5 | V1→V2 was breaking; within V2 usually safe |
-| `sqlalchemy` | 2.0.45 | 1.x→2.x was breaking; within 2.x check deprecation removals |
-| `uvicorn` | 0.40.0 | Usually safe, but check Starlette compatibility |
+| `fastapi` | 0.121.3 | Check for Pydantic compatibility, Starlette version requirements |
+| `pydantic` | 2.12.5 | V1→V2 was breaking; within V2 usually safe. 2.13.x held back 2026-06 (serializer rework settling, fastapi#15466) |
+| `starlette` | 0.49.3 | Now explicitly pinned (was transitive-only). Must stay inside fastapi's declared range |
+| `sqlalchemy` | 2.0.50 | 1.x→2.x was breaking; within 2.x check deprecation removals |
+| `uvicorn` | 0.49.0 | Usually safe, but check Starlette compatibility |
 | `httpx` | 0.28.1 | API changes occasionally; check if async patterns changed |
 | `bcrypt` | 5.0.0 | 4.x→5.x changed truncation behavior (we handle this) |
+| `python-multipart` | 0.0.32 | "Patch" releases include hardening limits (header counts, boundary size) |
 
 ### 🔴 Research Before Major Version Updates
 
 | Package | Current | Known Issues |
 |---------|---------|--------------|
-| `reportlab` | 4.4.7 | 3.x→4.x removed C extensions, changed XML parser defaults. Test PDF generation thoroughly after updates. |
-| `pypdf` | 5.4.0 | Major versions can change merge/fill behavior. Test IRS form generation. |
+| `reportlab` | 4.4.10 | **Stay on 4.4.x** — 4.5.x deferred (see below). 3.x→4.x removed C extensions. Test PDF generation thoroughly after updates. |
+| `pypdf` | 6.13.1 | Major versions can change merge/fill behavior. Test IRS form generation. 6.x bump (2026-06) verified text-identical output. |
+
+### ⏸ Deferred Updates (revisit in a future pass)
+
+Recorded during the 2026-06 modernization. Each was deliberately skipped; reasons below.
+
+| Package | Deferred version | Why deferred | Unblock condition |
+|---------|------------------|--------------|-------------------|
+| `pytest` | 9.0.3 | 9.x errors on `PytestRemovedIn9Warning` + `yield` tests; suite needs a deprecation sweep first. Residual: CVE-2025-71176 (local tmpdir, dev-only — acceptable) | Suite runs warning-clean under 8.4.2 with `-W error::DeprecationWarning` |
+| `starlette` | 1.x (1.2.1) | 1.0 removes `on_startup`/`on_event`/`@app.route`; requires fastapi ≥0.133 (which drops Py3.9 and requires pydantic ≥2.9). Residual: CVE-2026-48710 (Host-header path poisoning — app does no middleware path checks) | Take together with a fastapi 0.133+ / pydantic 2.13+ coordinated bump |
+| `pydantic` | 2.13.4 | Serializer rework; fastapi compat still settling (fastapi#15466) | A few months of 2.13.x maturity; take with the fastapi bump above |
+| `cryptography` | 47/48 | More removals (OpenSSL 1.1.x, TripleDES/ARC4); no CVEs we need from them | Only if a future advisory requires it |
+| `reportlab` | 4.5.x | PDF output drift risk: 4.5.x changes acroform `None` handling, `cssParse` colors, table bounds-error handling | Only with deliberate baseline re-approval of PDF output |
+| `typescript` | 6.0 | Explicitly breaking "bridge" release toward TS 7 | When typescript-eslint supports it and the ecosystem settles |
+| `eslint` | 10.x | Major (eslintrc removal, Node ≥20.19); ESLint 9 in maintenance but still patched | Move with eslint-plugin-react-hooks 7.x (its v6/v7 reshape the preset shapes our flat config consumes) |
+| `react` / `vite` | 19.x / 7+ | User decision: stay on React 18 / Vite 6 for this pass. Vite 6.4 is the active v6 security-backport branch | User opt-in to a migration pass |
 
 ---
 
@@ -105,9 +122,10 @@ These three are tightly coupled. When updating:
 3. Update together if needed
 4. Test all API endpoints after update
 
-**Current coupling (as of 0.115.x):**
-- Requires Pydantic V2 (V1 support deprecated, removal imminent)
-- Requires Starlette >=0.40.0,<0.46.0
+**Current coupling (as of 0.121.x):**
+- Requires Pydantic >=1.7.4,<3.0 (we run V2; fastapi 0.125+ drops V1 support entirely)
+- Requires Starlette >=0.40.0,<0.50.0 (we pin 0.49.3 — last release supporting Py3.9, fixes CVE-2025-62727/CVE-2025-54121)
+- fastapi 0.130+ requires Python >=3.10 — relevant if ever bumping past 0.124.x
 
 ### SQLAlchemy
 
@@ -233,7 +251,7 @@ pip-audit -r backend/requirements.txt
 We use **exact pinning** (`==`) for reproducibility:
 
 ```
-fastapi==0.115.8    # Exact version
+package-name==X.Y.Z    # Exact version
 ```
 
 **Why:** Prevents surprise breakage from automatic updates in CI/CD or Docker builds.
