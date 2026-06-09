@@ -87,6 +87,9 @@ Export_Tests/
 # --- Database Backups ---
 backups/
 
+# --- Modernization Baseline PDFs (scratch) ---
+baseline-pdfs/
+
 # --- Desktop Build ---
 desktop/build/
 desktop/dist/
