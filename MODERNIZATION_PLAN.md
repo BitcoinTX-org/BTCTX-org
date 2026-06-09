@@ -14,10 +14,10 @@
 
 ### Phase 0 — Baseline (no code changes)
 
-- [ ] Run full pytest suite: `.venv/bin/pytest backend/tests/ -v --tb=short` from repo root — record pass count (expect 158)
-- [ ] Run `./scripts/pre-commit.sh` — record result
-- [ ] Generate baseline PDFs into `baseline-pdfs/` (gitignored): complete tax report 2024, IRS forms 2024, transaction history 2024 (CSV + PDF). Use TestClient or a temporarily started backend — do NOT touch the production database. Also save pypdf-extracted text of each PDF as `.txt` next to it for later diffing.
-- [ ] [GATE] All tests green and baseline PDFs saved before ANY code change
+- [x] Run full pytest suite — **158/158 passed** (2026-06-09). Actual invocation: `PYTHONPATH=$(pwd) desktop/.venv/bin/pytest backend/tests/ --ignore=backend/tests/test_requests.py --ignore=backend/tests/test_transactions.py` (venv lives at `desktop/.venv`, Python 3.11.14; the two ignored files are stale ad-hoc scripts that hit a live server at import time; the 7 `TestAuthEndpoints` tests in `test_password_migration.py` require a live backend on :8000 — started one with `DATABASE_FILE=/tmp/btctx-baseline/test_backend.db`, production DB untouched)
+- [x] Run `./scripts/pre-commit.sh` — **10/10 static checks passed** (2026-06-09); API test section skipped due to a pre-existing bug: `check_backend_running()` in `pre_commit_tests.py` does an unauthenticated GET to `/api/accounts/` and requires `r.ok`, but all routers are auth-protected (401) so detection can never succeed. Fix detection in Phase 2 to restore the full 17 checks. Run with `PATH=desktop/.venv/bin:$PATH` so the script's `python3`/`uvicorn` resolve to the venv.
+- [x] Generate baseline PDFs into `baseline-pdfs/` (gitignored) — done 2026-06-09. Contents: `complete_tax_report_2024.pdf` (4pp), `irs_reports_2024.pdf` (4pp, pdftk-filled), `transaction_history_2024.pdf` (1p), `transaction_history_2024.csv`, plus pypdf-extracted `.txt` for each PDF and `seed_template.csv` (the exact 18-tx seed data). **Regeneration recipe** (use after every phase): start backend with `DATABASE_FILE=<fresh tmp>.db` on :8000 (`PYTHONPATH=$(pwd) desktop/.venv/bin/uvicorn backend.main:app --port 8000`), login admin/password, POST `baseline-pdfs/seed_template.csv` to `/api/import/execute`, GET the three reports for year=2024, extract text with pypdf, diff vs baseline `.txt` (dates/timestamps excepted). Production DB never touched.
+- [x] [GATE] All tests green and baseline PDFs saved before ANY code change — **PASSED 2026-06-09** (pytest 158/158, pre-commit static 10/10, baselines + extracted text + seed CSV saved)
 
 ### Phase 1 — Conservative dependency updates
 
