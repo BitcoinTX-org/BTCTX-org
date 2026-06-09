@@ -21,13 +21,13 @@
 
 ### Phase 1 — Conservative dependency updates
 
-- [ ] Read `docs/MAINTENANCE.md` in full before touching any dependency
+- [x] Read `docs/MAINTENANCE.md` in full before touching any dependency (done 2026-06-09 — exact pinning policy, fastapi/pydantic/starlette coupled, reportlab+pypdf are PDF-risk packages, bcrypt 72-byte handling already mitigated)
 - [ ] Audit `backend/requirements.txt`: for each package, current vs latest version, changelog highlights, security advisories (web search)
 - [ ] Audit `desktop/requirements.txt` the same way
-- [ ] Audit `frontend/package.json` the same way (React stays 18.x, Vite stays 6.x)
+- [x] Audit `frontend/package.json` (2026-06-09, web-verified). Decisions: react/react-dom stay 18.3.1 (final 18.x, no advisories); **vite ^6.4.3** (6.2.5 has 4 dev-server CVEs incl. GHSA-p9ff-h696-f583, fixed 6.4.2; 6.4 is the v6 security-backport branch); **axios ^1.17.0** (CVE-2026-25639 proto-pollution DoS on ≤1.13.4; verify lockfile never resolves pulled-malicious 1.14.1); **react-router-dom ^7.17.0** (SPA open-redirect/XSS fixed in 7.12.0); react-hook-form ^7.78.0; typescript ~5.9.3 (final 5.x; TS 6 is breaking — skip); typescript-eslint ^8.61.0; eslint + @eslint/js ^9.39.4 (ESLint 10 deferred); @vitejs/plugin-react ^4.7.0 (last 4.x, supports Vite 6); eslint-plugin-react-refresh ^0.4.26; @types/node ^22.19.20, @types/react ^18.3.31, @types/react-dom ^18.3.7; **remove @types/react-router-dom** (v5-only, RR7 ships own types); keep eslint-plugin-react-hooks ^5.2.0 and globals ^15.15.0 (v6/v7 and v16/v17 reshape configs for no benefit).
 - [ ] Apply backend patch/minor bumps; pin exact versions; run full test suite
 - [ ] Apply any low-risk backend major bumps ONE at a time, full test suite after each (skip any that risk Python 3.9 compat or PDF behavior)
-- [ ] Apply frontend patch/minor bumps; `npm run build` + `npm run lint` must pass
+- [x] Apply frontend patch/minor bumps (2026-06-09): all audit targets applied incl. vite 6.4.3, axios 1.17.0, react-router-dom 7.17.0, TS 5.9.3; removed obsolete @types/react-router-dom; `npm audit fix` cleared 3 transitive advisories (flatted/postcss/rollup) → 0 vulnerabilities. `npm run lint` ✅ (0 errors; 2 pre-existing app-source warnings: exhaustive-deps in TransactionForm.tsx:267, only-export-components in ToastContext.tsx:107). `npm run build` ✅ (tsc -b + vite build, 129 modules).
 - [ ] Apply desktop requirement bumps consistent with backend
 - [ ] Update `docs/MAINTENANCE.md` with new versions and any new deprecation warnings
 - [ ] [GATE] Full pytest suite + `./scripts/pre-commit.sh` + regenerate the three PDFs and diff extracted text vs `baseline-pdfs/` — must match (dates/timestamps excepted)
