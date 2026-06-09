@@ -21,7 +21,7 @@ python-dateutil==2.9.0.post0
 itsdangerous==2.2.0
 
 # Encryption (for backups)
-cryptography==44.0.2
+cryptography==46.0.7
 
 # PDF generation & manipulation
 pypdf==5.4.0
