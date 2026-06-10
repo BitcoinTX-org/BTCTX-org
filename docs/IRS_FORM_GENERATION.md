@@ -571,47 +571,15 @@ _ASSETS_DIR = os.path.join(_BACKEND_DIR, "assets", "irs_templates")
 
 ## Updating for New Tax Years
 
-When IRS releases new forms (typically December each year):
+**Follow the dedicated runbook: [IRS_ANNUAL_FORM_UPDATE.md](IRS_ANNUAL_FORM_UPDATE.md).**
 
-### Step 1: Download New Templates
+Summary of the current (post-v0.6.0) process — the runbook has the details:
 
-1. Go to https://www.irs.gov/forms-pubs
-2. Download fillable PDF versions of Form 8949 and Schedule D
-3. Save to `backend/assets/irs_templates/` with year suffix
-
-### Step 2: Extract Field Names
-
-```bash
-cd backend/scripts
-python extract_fields_8949.py
-```
-
-This will print all field names in the new PDF. Compare with the old field names.
-
-### Step 3: Update Field Mappings
-
-If field names changed, update:
-- `form_8949.py`: `map_8949_rows_to_field_data()`
-- `reports.py`: `schedule_d_fields` dictionary
-
-### Step 4: Update Checkbox Logic
-
-If new checkboxes were added (like 1099-DA boxes for 2025):
-- Update `form_8949.py`: `_determine_box()`
-
-### Step 5: Update Path Constants
-
-In `reports.py`:
-```python
-PATH_FORM_8949 = os.path.join(_ASSETS_DIR, "Form_8949_Fillable_2025.pdf")
-PATH_SCHEDULE_D = os.path.join(_ASSETS_DIR, "Schedule_D_Fillable_2025.pdf")
-```
-
-### Step 6: Test Thoroughly
-
-1. Generate reports with sample data
-2. Open PDFs and verify all fields are filled correctly
-3. Test with edge cases (many transactions, spanning multiple pages)
+1. Download the final-revision PDFs from the IRS (`irs.gov/pub/irs-prior/f8949--YYYY.pdf` once archived, or `irs.gov/pub/irs-pdf/` during the season; never `irs-dft` drafts) and record MD5s.
+2. Save as `backend/assets/irs_templates/YYYY/f8949.pdf` and `f1040sd.pdf` — `get_supported_years()` auto-detects the folder; there are no path constants to update.
+3. Diff field names against the prior year (`pdftk ... dump_data_fields`) and, only if they changed, add a year branch to `get_8949_field_config()` / `get_schedule_d_field_config()` in `form_8949.py` (and `_determine_box()` if box letters changed).
+4. Copy `test_2025_forms.py` to `test_YYYY_forms.py`, adjust year/rows-per-page expectations, run the full suite plus `baseline-pdfs/regen_and_diff.sh`, and do the manual visual check.
+5. Bump the minor version and release per CLAUDE.md.
 
 ---
 

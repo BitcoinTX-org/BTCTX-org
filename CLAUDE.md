@@ -93,7 +93,7 @@ backend/assets/irs_templates/
 
 **Versioning:** Bump minor version when adding new tax year forms (e.g., v0.3.0 for 2025 forms).
 
-See [docs/IRS_FORM_GENERATION.md](docs/IRS_FORM_GENERATION.md) for complete details.
+See [docs/IRS_FORM_GENERATION.md](docs/IRS_FORM_GENERATION.md) for how the pipeline works, and [docs/IRS_ANNUAL_FORM_UPDATE.md](docs/IRS_ANNUAL_FORM_UPDATE.md) for the **annual update runbook** (follow it step-by-step when adding a new tax year).
 
 ---
 
