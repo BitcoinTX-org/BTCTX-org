@@ -2,7 +2,7 @@
 
 > Complete documentation for building BitcoinTX as a native macOS application.
 
-**Version:** 0.5.4
+**Version:** 0.6.0
 **Last Updated:** 2025-01-17
 **Branch:** `develop`
 
