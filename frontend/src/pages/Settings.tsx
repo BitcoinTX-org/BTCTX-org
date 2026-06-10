@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import api from "../api";
+import RiverImport from "../components/RiverImport";
 import { downloadFile, isDesktopApp } from "../utils/desktopDownload";
 import "../styles/settings.css";
 
@@ -629,6 +630,9 @@ const Settings: React.FC = () => {
           To fully reset your account, delete all transactions and update your credentials above.
         </div>
       </div>
+
+      {/* ✅ River Import */}
+      <RiverImport />
 
       {/* ✅ Backup & Restore */}
       <div className="settings-section">
