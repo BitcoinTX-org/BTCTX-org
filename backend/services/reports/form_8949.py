@@ -207,9 +207,12 @@ def get_8949_field_config(year: int) -> Dict:
     """
     Return year-specific field configuration for Form 8949.
 
-    The IRS changes field names between years. Key differences:
-    - 2024: Table_Line1, fields start at f1_3 (not zero-padded)
-    - 2025+: Table_Line1_Part1/Part2, fields start at f1_03 (zero-padded for row 1)
+    The IRS changes field names between years. Key differences
+    (verified against pdftk dump_data_fields of the official templates):
+    - 2024: Table_Line1 on both pages, fields start at f1_3 (not zero-padded),
+      14 rows per page (f1_3..f1_114 / f2_3..f2_114)
+    - 2025: Table_Line1_Part1/Part2, row-1 fields zero-padded (f1_03..f1_10),
+      11 rows per page (f1_03..f1_90 / f2_03..f2_90)
 
     Args:
         year: Tax year (e.g., 2024, 2025)
@@ -224,6 +227,7 @@ def get_8949_field_config(year: int) -> Dict:
             "row1_base_index": 3,  # Row 1 starts at field index 3
             "row1_zero_pad": True,  # f1_03, f1_04, ... f1_10
             "row2_plus_zero_pad": False,  # f1_11, f1_12, ... (no padding after row 1)
+            "rows_per_page": 11,  # 2025 form shrank the table (was 14 rows)
         }
     else:  # 2024 and earlier
         return {
@@ -232,6 +236,7 @@ def get_8949_field_config(year: int) -> Dict:
             "row1_base_index": 3,
             "row1_zero_pad": False,  # f1_3, f1_4, ...
             "row2_plus_zero_pad": False,
+            "rows_per_page": 14,
         }
 
 
@@ -286,38 +291,39 @@ def get_schedule_d_field_config(year: int) -> Dict[str, str]:
 ##############################################################################
 def map_8949_rows_to_field_data(rows: List[Form8949Row], page: int = 1, year: int = 2024) -> Dict[str, str]:
     """
-    Fills up to 14 lines on a single Form 8949 page, using year-specific field naming.
+    Fills the rows of ONE part of a Form 8949 sheet, using year-specific naming.
+
+    The template only defines fields for its two physical pages:
+      page=1 => Part I (short-term) table on Page1, f1_* fields
+      page=2 => Part II (long-term) table on Page2, f2_* fields
+    Overflow beyond one sheet is handled by the caller filling additional
+    template copies — NOT by larger page numbers (f3_* fields don't exist;
+    pdftk would silently drop them).
 
     Field naming varies by year:
-    - 2024: Table_Line1, f1_3, f1_4, ... (not zero-padded)
-    - 2025+: Table_Line1_Part1/Part2, f1_03, f1_04, ... (zero-padded for row 1)
-
-    This version supports unlimited pages via dynamic naming:
-      page=1 => f1_..., page=2 => f2_..., page=3 => f3_..., etc.
+    - 2024: Table_Line1, f1_3, f1_4, ... (not zero-padded), 14 rows/page
+    - 2025: Table_Line1_Part1/Part2, f1_03... (zero-padded row 1), 11 rows/page
 
     Args:
-        rows: List of Form8949Row objects (max 14 per page)
-        page: Page number (1, 2, 3, ...)
+        rows: List of Form8949Row objects (max rows_per_page for the year)
+        page: 1 = Part I (short-term), 2 = Part II (long-term)
         year: Tax year for field name selection
 
     Returns:
         Dictionary mapping field names to values
     """
-    if len(rows) > 14:
-        raise ValueError("Cannot fit more than 14 rows on one page")
+    if page not in (1, 2):
+        raise ValueError("page must be 1 (Part I) or 2 (Part II)")
 
     # Get year-specific configuration
     config = get_8949_field_config(year)
 
-    # Select table name based on page (Part1 for page 1, Part2 for page 2 in 2025+)
-    # For additional pages beyond 2, we use Part1 naming (short-term continuation)
-    if page == 1:
-        table_name = config["table_name_page1"]
-    elif page == 2:
-        table_name = config["table_name_page2"]
-    else:
-        # For pages 3+, use the page1 pattern (additional short-term pages)
-        table_name = config["table_name_page1"]
+    if len(rows) > config["rows_per_page"]:
+        raise ValueError(
+            f"Cannot fit more than {config['rows_per_page']} rows on one {year} Form 8949 page"
+        )
+
+    table_name = config["table_name_page1"] if page == 1 else config["table_name_page2"]
 
     # Use page as the prefix number => f1_, f2_, ...
     prefix_num = page

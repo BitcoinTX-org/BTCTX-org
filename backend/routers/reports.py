@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter, Depends, Response, Query, HTTPException
 from sqlalchemy.orm import Session
-from typing import List
+from typing import Dict, List
 from io import BytesIO
 from pypdf import PdfReader, PdfWriter
 import os
@@ -23,10 +23,12 @@ from backend.services.reports.complete_tax_report import generate_comprehensive_
 from backend.services.reports import transaction_history
 from backend.services.reports.form_8949 import (
     build_form_8949_and_schedule_d,
+    get_8949_field_config,
     map_8949_rows_to_field_data,
     map_schedule_d_fields,
     Form8949Row,
 )
+from itertools import zip_longest
 
 # Import pdftk-based utilities (remove ghostscript references)
 from backend.services.reports.pdftk_filler import fill_pdf_with_pdftk
@@ -85,18 +87,21 @@ def get_irs_reports(
 
         partial_pdfs: List[bytes] = []
 
-        # 2) Fill short-term chunks (increment page number)
-        for page_idx, i in enumerate(range(0, len(short_rows), 14), start=1):
-            chunk = short_rows[i : i + 14]
-            field_data = map_8949_rows_to_field_data(chunk, page=page_idx, year=year)
-            pdf_bytes = fill_pdf_with_pdftk(path_form_8949, field_data)
-            partial_pdfs.append(pdf_bytes)
+        # 2-3) Fill Form 8949 sheets. Each template copy is one physical sheet:
+        # Page1 holds Part I (short-term) and Page2 holds Part II (long-term).
+        # Chunk each term by the year's table capacity and pair chunks onto
+        # shared sheets — overflow gets additional copies, never page-3+ field
+        # names (those don't exist in the template; pdftk would drop the rows).
+        rows_per_page = get_8949_field_config(year)["rows_per_page"]
+        short_chunks = [short_rows[i : i + rows_per_page] for i in range(0, len(short_rows), rows_per_page)]
+        long_chunks = [long_rows[i : i + rows_per_page] for i in range(0, len(long_rows), rows_per_page)]
 
-        # 3) Fill long-term chunks (continue page numbering)
-        long_start_page = (len(short_rows) + 13) // 14 + 1
-        for page_idx, i in enumerate(range(0, len(long_rows), 14), start=long_start_page):
-            chunk = long_rows[i : i + 14]
-            field_data = map_8949_rows_to_field_data(chunk, page=page_idx, year=year)
+        for short_chunk, long_chunk in zip_longest(short_chunks, long_chunks):
+            field_data: Dict[str, str] = {}
+            if short_chunk:
+                field_data.update(map_8949_rows_to_field_data(short_chunk, page=1, year=year))
+            if long_chunk:
+                field_data.update(map_8949_rows_to_field_data(long_chunk, page=2, year=year))
             pdf_bytes = fill_pdf_with_pdftk(path_form_8949, field_data)
             partial_pdfs.append(pdf_bytes)
 

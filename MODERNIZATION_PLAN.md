@@ -52,16 +52,16 @@
 
 ## Goal Run 2 — Phase 3 (2025 IRS forms verification)
 
-- [ ] Download current FINAL 2025 Form 8949 and Schedule D (f1040sd) PDFs from irs.gov; confirm they are final (not draft)
-- [ ] Compare against bundled `backend/assets/irs_templates/2025/*.pdf`: file content and `pdftk dump_data_fields` field names
-- [ ] If bundled templates differ from final IRS releases: replace them; if identical: record that and keep
-- [ ] Verify field mappings in `backend/services/reports/` work for 2025 templates (compare 2024 vs 2025 field names); update mappings only if field names changed
-- [ ] Add/extend 2025 tax-year tests following `backend/tests/test_pdf_content.py` pattern (form generation + content verification)
-- [ ] [GATE] Full pytest suite green including new 2025 tests
-- [ ] Review-fix-reverify cycle: re-read Phase 3 diff, run /simplify, fix all findings, re-run gates; repeat until zero findings
-- [ ] Generate filled sample 2025 Form 8949 + Schedule D with realistic test data; save paths for user
-- [ ] If field mappings changed: note that a minor version bump is required at release (per CLAUDE.md)
-- [ ] ⏸ WAIT FOR USER — present filled 2025 PDFs for visual inspection BEFORE committing template/mapping changes. END OF GOAL RUN 2.
+- [x] Download current FINAL 2025 Form 8949 and Schedule D from irs.gov (2026-06-10): both confirmed "2025" revision on page 1, zero draft/DO-NOT-FILE markers (f8949 128,770b 2pp; f1040sd 97,968b 2pp; saved in /tmp/btctx-irs2025/)
+- [x] Compare against bundled `backend/assets/irs_templates/2025/*.pdf` (2026-06-10): **MD5-identical** — f8949 `7a32df8f...`, f1040sd `8a97b160...` both match irs.gov downloads exactly
+- [x] Bundled templates identical to final IRS releases — **kept as-is, no replacement needed** (recorded 2026-06-10)
+- [x] Verify field mappings for 2025 templates (2026-06-10, via pdftk dump_data_fields on both years). Schedule D: the 8 mapped fields (Row3 f1_15-18, Row10 f1_35-38) are **identical** in 2024/2025 — config already correct. Form 8949: table names + zero-padding already correct in config, BUT **the 2025 form has 11 rows per page, not 14** — the hardcoded 14-row chunking would silently drop rows 12-14 (pdftk ignores unknown FDF fields). Fixed: `rows_per_page` added to `get_8949_field_config` (14 ≤2024 / 11 ≥2025), chunking now year-aware. ALSO fixed a pre-existing multi-page bug this exposed: the router numbered pages continuously (f1_, f2_, f3_, ...), but templates only have Page1 (Part I/short) + Page2 (Part II/long) fields — so a 2nd short chunk landed in the LONG-TERM table and 3rd+ chunks vanished. Router now pairs short/long chunks onto shared sheets (Part I ↔ page 1, Part II ↔ page 2, extra copies for overflow), which is how the paper form actually works. Verified: 158/158 + PDF gate PASS (2024 seed output unchanged).
+- [x] Add 2025 tax-year tests (2026-06-10): new `backend/tests/test_2025_forms.py`, 6 tests following the test_pdf_content.py pattern (TestClient + pypdf, deterministic data, no live price fetches): basic generation, **row-loss regression (13 short rows > 11-row capacity → all rows must appear)**, overflow→second sheet page count, long-term lands in Part II / short in Part I, Schedule D line 3/10 totals, and 2024 14-row capacity unchanged. Suite is now 164 tests.
+- [x] [GATE] Full pytest suite green including new 2025 tests — **PASSED 2026-06-10: 164/164** + PDF gate PASS (2024 baseline unchanged).
+- [x] Review-fix-reverify cycle (2026-06-10): consolidated 4-angle review pass — logic verified clean (zip_longest edge cases, field-range math, no stale logs); 2 test-rigor findings fixed: Schedule D totals test was vacuous (totals == single row values, asserted against whole PDF) → now scoped to SD pages with 2 disposals per term so every number is a genuine sum; "Part I" substring assertion was trivially true ("Part I" ⊂ "Part II") → anchored on Short-Term/Long-Term captions. Re-verified: 164/164.
+- [x] Generate filled sample 2025 forms (2026-06-10): **`baseline-pdfs/2025-samples/IRS_2025_Form8949_ScheduleD_SAMPLE.pdf`** (4pp) — realistic data: 2 buys (0.25 @ $23,750 + $25 fee; 0.15 @ $15,300 + $20 fee), 1 short sell (0.2 BTC, $21,500 gross − $30 fee), 1 long-term Spent withdrawal (0.4 BTC held Nov 2023 → Sep 2025, $38,000 proceeds, $14,000 basis). Verified: Part I row + Part II row + SD totals all correct.
+- [x] Field mappings changed (rows_per_page + multi-sheet pairing) → **minor version bump required at next release** (per CLAUDE.md convention, e.g. v0.6.0)
+- [x] ⏸ WAIT FOR USER — sample PDF opened for visual inspection 2026-06-10; **Phase 3 changes intentionally left UNCOMMITTED pending approval.** END OF GOAL RUN 2.
 - [ ] (After user approval) Commit Phase 3 work
 
 ---
@@ -102,3 +102,4 @@
 |------|-------------|
 | 2026-06-09 | Plan approved; branch + checklist created. Baseline pass counts: pytest TBD, pre-commit TBD. |
 | 2026-06-09 | Goal Run 1 complete: Phases 0-2 done. pytest 158/158, pre-commit static 10/10, PDF gate PASS (incl. new alt baseline for price-provider variance). Awaiting user review of backend summary. |
+| 2026-06-10 | Goal Run 2 complete: Phase 3 done (uncommitted, pending PDF approval). Templates verified MD5-identical to IRS finals; 2025 11-row capacity fixed + multi-sheet Part I/II pairing; 6 new tests; suite now 164/164; sample PDF at baseline-pdfs/2025-samples/. |
