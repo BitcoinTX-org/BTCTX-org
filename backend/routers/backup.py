@@ -39,7 +39,12 @@ CSV_COLUMNS = [
 
 
 def _require_auth(request: Request):
-    """Check that user is authenticated via session."""
+    """
+    Check that user is authenticated via session.
+
+    Intentionally session-only (stricter than main.py's dual-mode
+    get_current_user): API-key clients must NOT reach backup/restore.
+    """
     user_id = request.session.get("user_id")
     if not user_id:
         raise HTTPException(status_code=401, detail="Not authenticated")

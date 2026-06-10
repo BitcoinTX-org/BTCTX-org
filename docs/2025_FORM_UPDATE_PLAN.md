@@ -189,7 +189,7 @@ backend/assets/irs_templates/
 
 4. Similarly update `map_schedule_d_fields()` for year-specific naming
 
-5. Update `fill_8949_multi_page()` to pass year through the chain
+5. Update `fill_8949_multi_page()` to pass year through the chain *(function since removed as dead code, 2026-06 — the router does the page-chunking)*
 
 6. Update `reports.py` to pass year to all field mapping functions
 

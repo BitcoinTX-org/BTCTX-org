@@ -6,16 +6,6 @@ import os
 
 from backend.services.reports.pdftk_path import get_pdftk_path
 
-# -----------------------------------------------------------------------------
-# (DEPRECATED) Old Ghostscript flattening method
-# -----------------------------------------------------------------------------
-# def flatten_pdf_with_ghostscript(pdf_bytes: bytes) -> bytes:
-#     """
-#     (DEPRECATED) Flatten PDF via Ghostscript.
-#     No longer used now that we rely on pdftk for XFA forms.
-#     """
-#     ...
-
 
 def flatten_pdf_with_pdftk(pdf_bytes: bytes) -> bytes:
     """

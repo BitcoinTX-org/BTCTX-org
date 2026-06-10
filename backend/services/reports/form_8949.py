@@ -1,22 +1,14 @@
 # FILE: backend/services/reports/form_8949.py
 
-import io
 import logging
 from datetime import datetime, timezone
 from decimal import Decimal, ROUND_HALF_UP
 from typing import List, Dict, Literal, Optional
 from sqlalchemy.orm import Session
 
-from pypdf import PdfReader, PdfWriter
-from io import BytesIO
-
 from backend.models import LotDisposal
 from backend.models.transaction import Transaction
-from backend.services.reports.pdftk_filler import fill_pdf_with_pdftk
-from backend.services.reports.pdf_utils import flatten_pdf_with_pdftk
 
-# Set up logging for audit trail
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 ##############################################################################
@@ -420,118 +412,3 @@ def map_schedule_d_fields(schedule_d: Dict[str, Dict[str, Decimal]], year: int =
         config["long_adjustment"]: "",
         config["long_gain_loss"]: str(long_data["gain_loss"]),
     }
-
-
-##############################################################################
-# 5) MULTI-PAGE PDF GENERATION (HYBRID APPROACH)
-##############################################################################
-def fill_8949_multi_page(
-    rows: List[Form8949Row],
-    template_pdf_path: str,
-    flatten: bool = True,
-    remove_xfa: bool = True,
-    year: int = 2024
-) -> BytesIO:
-    """
-    Generates a multi-page Form 8949 PDF, handling more than 2 pages if needed.
-    Uses year-specific field naming for compatibility with different IRS form versions.
-
-    - Splits rows into 14-row chunks.
-    - Maps each chunk to field data for its page index using year-specific naming.
-    - Fills and merges, removing XFA if requested.
-    - Optionally flattens the final PDF.
-
-    Args:
-        rows (List[Form8949Row]): The line items for Form 8949.
-        template_pdf_path (str): Path to the fillable PDF template.
-        flatten (bool, optional): Whether to flatten the final PDF. Defaults to True.
-        remove_xfa (bool, optional): Whether to remove XFA references. Defaults to True.
-        year (int, optional): Tax year for field name selection. Defaults to 2024.
-
-    Returns:
-        BytesIO: A buffer containing the merged Form 8949 PDF. Caller must close if needed.
-
-    Raises:
-        FileNotFoundError: If the template PDF is not found.
-        RuntimeError: For failures during PDF fill/flatten operations.
-    """
-    if not rows:
-        # Return an empty PDF if no rows are provided
-        writer = PdfWriter()
-        output_buffer = BytesIO()
-        writer.write(output_buffer)
-        output_buffer.seek(0)
-        logger.info("Generated empty Form 8949 PDF due to no rows")
-        return output_buffer
-
-    # Validate template PDF exists and is not empty
-    try:
-        template_reader = PdfReader(template_pdf_path)
-        if len(template_reader.pages) == 0:
-            raise ValueError("Template PDF is empty")
-    except FileNotFoundError:
-        raise FileNotFoundError(f"Template PDF not found at: {template_pdf_path}")
-
-    # Break the rows into pages of up to 14
-    chunks = [rows[i:i + 14] for i in range(0, len(rows), 14)]
-    writer = PdfWriter()
-
-    try:
-        for page_num, chunk in enumerate(chunks, start=1):
-            logger.info(f"Processing Form 8949 page {page_num} with {len(chunk)} rows")
-            try:
-                # Map to the correct field data, with dynamic page numbering and year-specific naming
-                field_data = map_8949_rows_to_field_data(chunk, page=page_num, year=year)
-            except ValueError as e:
-                raise RuntimeError(f"Page {page_num} chunk error: {str(e)}")
-
-            # Fill the PDF template for this chunk
-            try:
-                filled_pdf_bytes = fill_pdf_with_pdftk(template_pdf_path, field_data)
-            except Exception as e:
-                raise RuntimeError(f"Failed to fill PDF for page {page_num}: {str(e)}")
-
-            # Read the filled PDF page
-            single_page_stream = BytesIO(filled_pdf_bytes)
-            reader = PdfReader(single_page_stream)
-
-            # Remove XFA if requested
-            if remove_xfa and "/XFA" in reader.trailer["/Root"]:
-                del reader.trailer["/Root"]["/XFA"]
-                logger.info(f"Removed XFA from page {page_num}")
-
-            # Add the single page to our writer
-            if len(reader.pages) == 0:
-                raise RuntimeError(f"Page {page_num} generated an empty PDF")
-
-            writer.add_page(reader.pages[0])
-
-        # Merge all pages into one PDF
-        merged_output = BytesIO()
-        writer.write(merged_output)
-        merged_pdf_bytes = merged_output.getvalue()
-
-        # Flatten if requested (removes form fields, ensures final compliance)
-        if flatten:
-            try:
-                merged_pdf_bytes = flatten_pdf_with_pdftk(merged_pdf_bytes)
-                logger.info("Flattened final Form 8949 PDF")
-            except Exception as e:
-                raise RuntimeError(f"Failed to flatten the final PDF: {str(e)}")
-
-        final_buffer = BytesIO(merged_pdf_bytes)
-        final_buffer.seek(0)
-        logger.info(f"Successfully generated Form 8949 PDF with {len(chunks)} pages")
-        return final_buffer
-
-    except Exception as e:
-        logger.error(f"Error generating multi-page Form 8949 PDF: {str(e)}")
-        raise RuntimeError(f"Error generating multi-page Form 8949 PDF: {str(e)}")
-    finally:
-        # Clean up resources explicitly
-        if 'merged_output' in locals():
-            merged_output.close()
-        if 'single_page_stream' in locals():
-            single_page_stream.close()
-        if 'final_buffer' in locals():
-            final_buffer.seek(0)  # Ensure buffer is ready for reading

@@ -64,10 +64,20 @@ compare() {  # compare <relative filename> <volatile-line regex or empty>
     if diff <(grep -vE "$filter" "$BASE/$file") \
             <(grep -vE "$filter" "$WORK/$file") > "$WORK/$file.diff"; then
         echo "MATCH  $file"
-    else
-        echo "DRIFT  $file — see $WORK/$file.diff"
-        FAIL=1
+        return
     fi
+    # Transfer-fee disposals are valued via a LIVE historical BTC price fetch
+    # (CoinGecko, falling back to Kraken — the two differ by a few cents).
+    # A .alt.txt baseline, captured from verified-identical code under the
+    # fallback provider, is the only other accepted output.
+    local alt="$BASE/${file%.txt}.alt.txt"
+    if [ -f "$alt" ] && diff <(grep -vE "$filter" "$alt") \
+                             <(grep -vE "$filter" "$WORK/$file") > "$WORK/$file.diff"; then
+        echo "MATCH  $file (alt baseline: fallback price provider)"
+        return
+    fi
+    echo "DRIFT  $file — see $WORK/$file.diff"
+    FAIL=1
 }
 
 # Only the complete tax report embeds its generation timestamp.

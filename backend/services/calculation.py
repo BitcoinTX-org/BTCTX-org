@@ -21,7 +21,7 @@ import logging
 from backend.models.account import Account
 from backend.models.transaction import Transaction, LedgerEntry, LotDisposal, BitcoinLot
 
-logging.basicConfig(level=logging.WARNING)
+logger = logging.getLogger(__name__)
 
 def get_account_balance(db: Session, account_id: int) -> Decimal:
     """
@@ -39,19 +39,23 @@ def get_account_balance(db: Session, account_id: int) -> Decimal:
 def get_all_account_balances(db: Session) -> List[Dict]:
     """
     Returns a list of all accounts (id, name, currency) plus their current balance.
-    Uses get_account_balance(...) for each account.
+    Balances are computed in a single grouped query instead of one query per account.
     """
+    sums = dict(
+        db.query(LedgerEntry.account_id, func.sum(LedgerEntry.amount))
+          .group_by(LedgerEntry.account_id)
+          .all()
+    )
     accounts = db.query(Account).all()
-    results = []
-    for account in accounts:
-        balance = get_account_balance(db, account.id)
-        results.append({
+    return [
+        {
             "account_id": account.id,
             "name": account.name,
             "currency": account.currency,
-            "balance": balance
-        })
-    return results
+            "balance": sums.get(account.id, Decimal("0.0")),
+        }
+        for account in accounts
+    ]
 
 
 def get_average_cost_basis(db: Session) -> Decimal:
@@ -104,14 +108,9 @@ def get_gains_and_losses(db: Session) -> dict:
     sells_proceeds = Decimal("0.0")
     withdrawals_spent = Decimal("0.0")
 
-    income_earned = Decimal("0.0")
-    income_btc = Decimal("0.0")
-    interest_earned = Decimal("0.0")
-    interest_btc = Decimal("0.0")
-    rewards_earned = Decimal("0.0")
-    rewards_btc = Decimal("0.0")
-    gifts_received = Decimal("0.0")
-    gifts_btc = Decimal("0.0")
+    # Per-source deposit aggregators (USD cost basis and BTC amount per source)
+    deposit_usd = {s: Decimal("0.0") for s in ("income", "interest", "reward", "gift")}
+    deposit_btc = {s: Decimal("0.0") for s in deposit_usd}
 
     fees_usd = Decimal("0.0")
     fees_btc = Decimal("0.0")
@@ -128,7 +127,7 @@ def get_gains_and_losses(db: Session) -> dict:
         gain = disposal.realized_gain_usd
         # If no holding_period is set, we default to SHORT but log a warning
         if not disposal.holding_period:
-            logging.warning(
+            logger.warning(
                 f"LotDisposal ID={disposal.id} has no holding_period; defaulting to SHORT in aggregator."
             )
         holding_period = disposal.holding_period.upper() if disposal.holding_period else "SHORT"
@@ -149,109 +148,60 @@ def get_gains_and_losses(db: Session) -> dict:
     # --------------------- 3) Parse Transactions for Non-Disposal Aggregations ---------------------
     transactions = db.query(Transaction).all()
     for tx in transactions:
+        tx_type = tx.type.lower()
+
         # SELL => track proceeds for reference
-        if tx.type.lower() == "sell" and tx.proceeds_usd is not None:
+        if tx_type == "sell" and tx.proceeds_usd is not None:
             try:
                 sells_proceeds += Decimal(str(tx.proceeds_usd))
             except Exception as e:
-                logging.warning(f"Error converting proceeds_usd for Sell txn {tx.id}: {e}")
+                logger.warning(f"Error converting proceeds_usd for Sell txn {tx.id}: {e}")
 
         # WITHDRAWAL (Spent) => track how many USD were spent, but not as a capital loss
         if (
-            tx.type.lower() == "withdrawal"
+            tx_type == "withdrawal"
             and (tx.purpose or "").lower() == "spent"
             and tx.proceeds_usd is not None
         ):
             try:
-                spent_amt = Decimal(str(tx.proceeds_usd))
-                withdrawals_spent += spent_amt
+                withdrawals_spent += Decimal(str(tx.proceeds_usd))
             except Exception as e:
-                logging.warning(f"Error converting proceeds_usd for Spent withdrawal txn {tx.id}: {e}")
+                logger.warning(f"Error converting proceeds_usd for Spent withdrawal txn {tx.id}: {e}")
 
-        # DEPOSIT (Income)
-        if (
-            tx.type.lower() == "deposit"
-            and (tx.source or "").lower() == "income"
-            and tx.cost_basis_usd is not None
-            and tx.amount is not None
-        ):
-            try:
-                cb = Decimal(str(tx.cost_basis_usd))
-                amt = Decimal(str(tx.amount))
-                if cb > 0:
-                    income_earned += cb
-                if amt > 0:
-                    income_btc += amt
-            except Exception as e:
-                logging.warning(f"Error converting cost_basis_usd for Income Deposit txn {tx.id}: {e}")
-
-        # DEPOSIT (Interest)
-        if (
-            tx.type.lower() == "deposit"
-            and (tx.source or "").lower() == "interest"
-            and tx.cost_basis_usd is not None
-            and tx.amount is not None
-        ):
-            try:
-                cb = Decimal(str(tx.cost_basis_usd))
-                amt = Decimal(str(tx.amount))
-                if cb > 0:
-                    interest_earned += cb
-                if amt > 0:
-                    interest_btc += amt
-            except Exception as e:
-                logging.warning(f"Error converting cost_basis_usd for Interest Deposit txn {tx.id}: {e}")
-
-        # DEPOSIT (Reward)
-        if (
-            tx.type.lower() == "deposit"
-            and (tx.source or "").lower() == "reward"
-            and tx.cost_basis_usd is not None
-            and tx.amount is not None
-        ):
-            try:
-                cb = Decimal(str(tx.cost_basis_usd))
-                amt = Decimal(str(tx.amount))
-                if cb > 0:
-                    rewards_earned += cb
-                if amt > 0:
-                    rewards_btc += amt
-            except Exception as e:
-                logging.warning(f"Error converting cost_basis_usd for Reward Deposit txn {tx.id}: {e}")
-
-        # DEPOSIT (Gift)
-        if (
-            tx.type.lower() == "deposit"
-            and (tx.source or "").lower() == "gift"
-            and tx.cost_basis_usd is not None
-            and tx.amount is not None
-        ):
-            try:
-                cb = Decimal(str(tx.cost_basis_usd))
-                amt = Decimal(str(tx.amount))
-                if cb > 0:
-                    gifts_received += cb
-                if amt > 0:
-                    gifts_btc += amt
-            except Exception as e:
-                logging.warning(f"Error converting cost_basis_usd for Gift Deposit txn {tx.id}: {e}")
+        # DEPOSIT (Income / Interest / Reward / Gift) => per-source USD + BTC totals
+        if tx_type == "deposit" and tx.cost_basis_usd is not None and tx.amount is not None:
+            source = (tx.source or "").lower()
+            if source in deposit_usd:
+                try:
+                    cb = Decimal(str(tx.cost_basis_usd))
+                    amt = Decimal(str(tx.amount))
+                    if cb > 0:
+                        deposit_usd[source] += cb
+                    if amt > 0:
+                        deposit_btc[source] += amt
+                except Exception as e:
+                    logger.warning(
+                        f"Error converting cost_basis_usd for {source.title()} Deposit txn {tx.id}: {e}"
+                    )
 
         # FEES (USD or BTC)
         if tx.fee_amount is not None and tx.fee_currency is not None:
             try:
-                fee_amt_str = str(tx.fee_amount).lower()
-                fee_amt = Decimal(fee_amt_str)
+                fee_amt = Decimal(str(tx.fee_amount))
                 currency = tx.fee_currency.lower()
                 if currency == "usd":
                     fees_usd += fee_amt
-                    logging.debug(f"Added USD fee {fee_amt} for tx {tx.id}")
                 elif currency == "btc":
                     fees_btc += fee_amt
-                    logging.debug(f"Added BTC fee {fee_amt} for tx {tx.id}")
             except (ValueError, TypeError) as e:
-                logging.warning(f"Failed to parse fee_amount {tx.fee_amount} for tx {tx.id}: {e}")
+                logger.warning(f"Failed to parse fee_amount {tx.fee_amount} for tx {tx.id}: {e}")
 
     # --------------------- 4) Final Summaries & YTD Gains Logic ---------------------
+    income_earned, income_btc = deposit_usd["income"], deposit_btc["income"]
+    interest_earned, interest_btc = deposit_usd["interest"], deposit_btc["interest"]
+    rewards_earned, rewards_btc = deposit_usd["reward"], deposit_btc["reward"]
+    gifts_received, gifts_btc = deposit_usd["gift"], deposit_btc["gift"]
+
     total_income = income_earned + interest_earned + rewards_earned
 
     # 'total_losses' no longer includes 'withdrawals_spent'
@@ -265,16 +215,13 @@ def get_gains_and_losses(db: Session) -> dict:
     now_utc = datetime.now(timezone.utc)
     start_of_year = datetime(now_utc.year, 1, 1, tzinfo=timezone.utc)
 
-    ytd_gain_sum = Decimal("0.0")
-    ytd_disposals = (
-        db.query(LotDisposal)
+    ytd_gain_sum = (
+        db.query(func.coalesce(func.sum(LotDisposal.realized_gain_usd), 0))
           .join(Transaction, LotDisposal.transaction_id == Transaction.id)
           .filter(Transaction.timestamp >= start_of_year)
-          .all()
+          .scalar()
     )
-    for d in ytd_disposals:
-        if d.realized_gain_usd is not None:
-            ytd_gain_sum += d.realized_gain_usd
+    ytd_gain_sum = Decimal(str(ytd_gain_sum or 0))
 
     # Convert ytd_gain_sum => float
     year_to_date_capital_gains = float(

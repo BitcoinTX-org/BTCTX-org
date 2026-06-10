@@ -76,13 +76,7 @@ def list_transactions(db: Session = Depends(get_db)):
     is returned with a 'Z' suffix (UTC).
     """
     raw_txs = tx_service.get_all_transactions(db)
-
-    results = []
-    for tx in raw_txs:
-        final_model = _attach_utc_and_build_read_model(tx)
-        results.append(final_model)
-
-    return results
+    return [_attach_utc_and_build_read_model(tx) for tx in raw_txs]
 
 
 @router.get("/{tx_id}", response_model=TransactionRead)
@@ -143,8 +137,8 @@ def delete_all_transactions_endpoint(db: Session = Depends(get_db)):
     Delete all transactions from the database. This will remove all Transaction records,
     and cascade delete associated LedgerEntries, BitcoinLots, and LotDisposals.
     """
-    deleted_count = tx_service.delete_all_transactions(db)
-    return {"deleted_count": deleted_count}
+    # 204 No Content: the deleted count is intentionally not returned.
+    tx_service.delete_all_transactions(db)
 
 
 @router.delete("/{transaction_id}", status_code=204)

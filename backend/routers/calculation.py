@@ -11,7 +11,7 @@ The underlying logic is implemented in backend/services/calculation.py.
 This modular design lets you display each calculation category (or totals) in your frontend.
 """
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from typing import List, Dict
 from sqlalchemy.orm import Session
 from decimal import Decimal

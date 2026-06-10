@@ -37,11 +37,41 @@ MAX_ROWS = 10000
 
 
 def _require_auth(request: Request):
-    """Check that user is authenticated via session."""
+    """
+    Check that user is authenticated via session.
+
+    Intentionally session-only (stricter than main.py's dual-mode
+    get_current_user): API-key clients must NOT reach CSV import.
+    """
     user_id = request.session.get("user_id")
     if not user_id:
         raise HTTPException(status_code=401, detail="Not authenticated")
     return user_id
+
+
+async def _read_validated_csv(file: UploadFile) -> bytes:
+    """Validate the uploaded file's extension, size, and non-emptiness; return its content."""
+    if not file.filename or not file.filename.lower().endswith(".csv"):
+        raise HTTPException(
+            status_code=400,
+            detail="File must be a CSV file (.csv extension)"
+        )
+
+    content = await file.read()
+
+    if len(content) > MAX_FILE_SIZE:
+        raise HTTPException(
+            status_code=400,
+            detail=f"File too large. Maximum size is {MAX_FILE_SIZE // (1024 * 1024)}MB."
+        )
+
+    if len(content) == 0:
+        raise HTTPException(
+            status_code=400,
+            detail="File is empty."
+        )
+
+    return content
 
 
 @router.get("/template", response_class=PlainTextResponse)
@@ -132,28 +162,7 @@ async def preview_import(
     """
     _require_auth(request)
 
-    # Check file extension
-    if not file.filename or not file.filename.lower().endswith(".csv"):
-        raise HTTPException(
-            status_code=400,
-            detail="File must be a CSV file (.csv extension)"
-        )
-
-    # Read file content
-    content = await file.read()
-
-    # Check file size
-    if len(content) > MAX_FILE_SIZE:
-        raise HTTPException(
-            status_code=400,
-            detail=f"File too large. Maximum size is {MAX_FILE_SIZE // (1024 * 1024)}MB."
-        )
-
-    if len(content) == 0:
-        raise HTTPException(
-            status_code=400,
-            detail="File is empty."
-        )
+    content = await _read_validated_csv(file)
 
     # Parse CSV
     result = parse_csv_file(content)
@@ -199,28 +208,7 @@ async def execute_csv_import(
             detail=f"Database has {count} existing transaction(s). Please delete all transactions before importing."
         )
 
-    # Check file extension
-    if not file.filename or not file.filename.lower().endswith(".csv"):
-        raise HTTPException(
-            status_code=400,
-            detail="File must be a CSV file (.csv extension)"
-        )
-
-    # Read file content
-    content = await file.read()
-
-    # Check file size
-    if len(content) > MAX_FILE_SIZE:
-        raise HTTPException(
-            status_code=400,
-            detail=f"File too large. Maximum size is {MAX_FILE_SIZE // (1024 * 1024)}MB."
-        )
-
-    if len(content) == 0:
-        raise HTTPException(
-            status_code=400,
-            detail="File is empty."
-        )
+    content = await _read_validated_csv(file)
 
     # Parse CSV
     result = parse_csv_file(content)

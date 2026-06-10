@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter, Depends, Response, Query, HTTPException
 from sqlalchemy.orm import Session
-from typing import Optional, Dict, List
+from typing import List
 from io import BytesIO
 from pypdf import PdfReader, PdfWriter
 import os
@@ -24,7 +24,7 @@ from backend.services.reports import transaction_history
 from backend.services.reports.form_8949 import (
     build_form_8949_and_schedule_d,
     map_8949_rows_to_field_data,
-    get_schedule_d_field_config,
+    map_schedule_d_fields,
     Form8949Row,
 )
 
@@ -38,7 +38,6 @@ reports_router = APIRouter()
 @reports_router.get("/complete_tax_report")
 def get_complete_tax_report(
     year: int,
-    user_id: Optional[int] = None,
     db: Session = Depends(get_db),
 ):
     """
@@ -102,19 +101,7 @@ def get_irs_reports(
             partial_pdfs.append(pdf_bytes)
 
         # 4) Fill Schedule D totals using year-specific field names
-        sd_config = get_schedule_d_field_config(year)
-        schedule_d_fields = {
-            # Short-term (line 1b)
-            sd_config["short_proceeds"]: str(report_data["schedule_d"]["short_term"]["proceeds"]),
-            sd_config["short_cost"]: str(report_data["schedule_d"]["short_term"]["cost"]),
-            sd_config["short_adjustment"]: "",
-            sd_config["short_gain_loss"]: str(report_data["schedule_d"]["short_term"]["gain_loss"]),
-            # Long-term (line 8b)
-            sd_config["long_proceeds"]: str(report_data["schedule_d"]["long_term"]["proceeds"]),
-            sd_config["long_cost"]: str(report_data["schedule_d"]["long_term"]["cost"]),
-            sd_config["long_adjustment"]: "",
-            sd_config["long_gain_loss"]: str(report_data["schedule_d"]["long_term"]["gain_loss"]),
-        }
+        schedule_d_fields = map_schedule_d_fields(report_data["schedule_d"], year=year)
         filled_sd_bytes = fill_pdf_with_pdftk(path_schedule_d, schedule_d_fields)
         partial_pdfs.append(filled_sd_bytes)
 
@@ -150,7 +137,6 @@ def get_irs_reports(
 def get_simple_transaction_history(
     year: int,
     format: str = Query("csv", pattern="^(csv|pdf)$"),
-    user_id: Optional[int] = None,
     db: Session = Depends(get_db),
 ):
     """

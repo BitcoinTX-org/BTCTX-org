@@ -22,7 +22,6 @@ from backend.schemas.csv_import import CSVRowPreview, CSVParseError
 from backend.constants import (
     ACCOUNT_NAME_TO_ID,
     ACCOUNT_BANK,
-    ACCOUNT_WALLET,
     ACCOUNT_EXCHANGE_USD,
     ACCOUNT_EXCHANGE_BTC,
     ACCOUNT_EXTERNAL,
@@ -664,10 +663,10 @@ def execute_import(db: Session, transactions: List[Dict[str, Any]]) -> int:
         db.commit()
         return imported_count
 
-    except Exception as e:
+    except Exception:
         # Roll back all uncommitted transactions
         db.rollback()
-        raise e
+        raise
 
 
 def generate_template_csv() -> str:

@@ -1,5 +1,5 @@
-from fastapi import APIRouter, HTTPException, Depends, Query
-from ..services import bitcoin  # Adjust the import path if needed
+from fastapi import APIRouter, Query
+from backend.services import bitcoin
 
 router = APIRouter(
     tags=["Bitcoin"]

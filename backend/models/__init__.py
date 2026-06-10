@@ -11,8 +11,8 @@ from backend.database import Base
 # Models from user.py
 from .user import User
 
-# Models (and enums) from account.py
-from .account import Account, AccountType
+# Models from account.py
+from .account import Account
 
 # Models from transaction.py
 from .transaction import Transaction, LedgerEntry, BitcoinLot, LotDisposal

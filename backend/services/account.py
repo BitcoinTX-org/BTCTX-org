@@ -165,7 +165,7 @@ def ensure_special_accounts_exist(db: Session):
             try:
                 db.commit()
                 db.refresh(new_acc)
-            except:
+            except Exception:
                 db.rollback()
                 raise HTTPException(
                     status_code=400,

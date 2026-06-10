@@ -17,21 +17,13 @@ from backend.services.user import (
 )
 
 # Database session provider
-from backend.database import SessionLocal
+from backend.database import get_db
+
+# User model (for the protected-route lookup)
+from backend.models.user import User
 
 # Create a FastAPI router instance with the "users" tag for API documentation
 router = APIRouter(tags=["users"])
-
-def get_db():
-    """
-    Provide a database session for user endpoints.
-    Yields a SessionLocal instance and ensures it is closed after use.
-    """
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
 
 @router.post("/register", response_model=UserRead)
 def register_user(user: UserCreate, db: Session = Depends(get_db)):
@@ -75,7 +67,6 @@ def register_user(user: UserCreate, db: Session = Depends(get_db)):
 
 @router.get("/", response_model=List[UserRead])
 def get_users(db: Session = Depends(get_db)):
-    print("✅ get_users() called")
     return get_all_users(db)
 
 @router.patch("/{user_id}", response_model=UserRead)
@@ -116,15 +107,11 @@ def delete_user(user_id: int, request: Request, db: Session = Depends(get_db)):
 @router.get("/protected")
 def protected_route(request: Request, db: Session = Depends(get_db)):
     user_id = request.session.get("user_id")
-    print("🔐 /protected called, user_id:", user_id)  # ADD THIS
     if not user_id:
         raise HTTPException(status_code=403, detail="Not authenticated")
-
-    from backend.models.user import User
 
     user = db.query(User).filter_by(id=user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
-    print("✅ Returning username:", user.username)  # ADD THIS
     return {"username": user.username}

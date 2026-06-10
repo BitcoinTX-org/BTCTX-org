@@ -21,10 +21,8 @@ with your new pdftk-based system for filling/flattening IRS forms.
 """
 
 import logging
-import requests
 from datetime import datetime, timezone
 from decimal import Decimal, ROUND_HALF_DOWN, InvalidOperation
-from typing import Optional
 from collections import defaultdict
 
 from fastapi import HTTPException
@@ -32,7 +30,6 @@ from sqlalchemy.orm import Session, joinedload
 
 from backend.models.transaction import (Transaction, LedgerEntry, BitcoinLot, LotDisposal)
 from backend.models.account import Account
-from backend.schemas.transaction import TransactionCreate
 from backend.constants import (
     ACCOUNT_BANK,
     ACCOUNT_EXCHANGE_USD,
@@ -114,9 +111,6 @@ def create_transaction_record(tx_data: dict, db: Session, auto_commit: bool = Tr
     )
     db.add(new_tx)
     db.flush()  # new_tx.id is now available
-
-    # Optional grouping usage
-    new_tx.group_id = new_tx.id
 
     # 5) Build ledger lines
     remove_ledger_entries_for_tx(new_tx, db)

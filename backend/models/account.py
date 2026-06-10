@@ -15,21 +15,9 @@ CHANGES:
   ledger_entries relationship, which matches LedgerEntry.account.
 """
 
-from enum import Enum
 from sqlalchemy import Column, Integer, String, ForeignKey
 from sqlalchemy.orm import relationship
 from backend.database import Base
-
-# Optional legacy enum if you want, or you can remove it.
-class AccountType(Enum):
-    """
-    (LEGACY) If you once distinguished account types like "Bank", "Wallet",
-    or "ExchangeUSD", etc. We now typically store just 'name' and 'currency'.
-    """
-    Bank = "Bank"
-    Wallet = "Wallet"
-    ExchangeUSD = "ExchangeUSD"
-    ExchangeBTC = "ExchangeBTC"
 
 class Account(Base):
     __tablename__ = "accounts"

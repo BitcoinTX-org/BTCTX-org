@@ -20,7 +20,6 @@ standard double-entry design.
 - NOW storing all DateTime columns as offset‐aware UTC by using UTCDateTime from database.py
 """
 
-import enum
 from sqlalchemy import (
     Column,
     Integer,
@@ -31,23 +30,10 @@ from sqlalchemy import (
     func
 )
 from sqlalchemy.orm import relationship
-from datetime import datetime
 
 # We import Base and UTCDateTime from database.py
 from backend.database import Base, UTCDateTime
 
-
-# ========================================================================
-# (Optional) ENUM CLASSES
-# If you want to store transaction types, sources, or purposes as Enums,
-# uncomment or adapt them. For now, we rely on a string-based 'type'.
-# ========================================================================
-# class TransactionType(enum.Enum):
-#     Deposit = "Deposit"
-#     Withdrawal = "Withdrawal"
-#     Transfer = "Transfer"
-#     Buy = "Buy"
-#     Sell = "Sell"
 
 # ------------------------------------------------------------------------
 # TRANSACTION (Header)

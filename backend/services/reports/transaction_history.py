@@ -52,7 +52,6 @@ from sqlalchemy.orm import Session
 from backend.models.transaction import Transaction
 from backend.models.account import Account
 
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
@@ -120,11 +119,12 @@ def generate_transaction_history_report(
         len(txs), year, start_of_year, end_of_year
     )
 
-    # Build intermediate row data
+    # Build intermediate row data (accounts fetched once — avoids per-row queries)
+    accounts = {a.id: a for a in db.query(Account).all()}
     results = []
     for tx in txs:
-        row = _build_row(db, tx)
-        logger.info("DEBUG: Built row for Tx ID=%s => %s", tx.id, row)
+        row = _build_row(accounts, tx)
+        logger.debug("DEBUG: Built row for Tx ID=%s => %s", tx.id, row)
         results.append(row)
 
     # Output as CSV or PDF
@@ -136,7 +136,7 @@ def generate_transaction_history_report(
         return pdf_bytes
 
 
-def _build_row(db: Session, tx: Transaction) -> dict:
+def _build_row(accounts: dict, tx: Transaction) -> dict:
     """
     Produces a dict with our final columns:
       date, type, from_account, to_account, asset, amount,
@@ -150,11 +150,11 @@ def _build_row(db: Session, tx: Transaction) -> dict:
     csv_type = _map_tx_type(tx)
 
     # Resolve accounts
-    from_acct = _get_account_name(db, tx.from_account_id)
-    to_acct = _get_account_name(db, tx.to_account_id)
+    from_acct = _get_account_name(accounts, tx.from_account_id)
+    to_acct = _get_account_name(accounts, tx.to_account_id)
 
     # Determine asset
-    csv_asset = _determine_asset(db, tx)
+    csv_asset = _determine_asset(accounts, tx)
 
     # Format amounts
     amount_str = _format_decimal(tx.amount, currency=csv_asset)
@@ -220,7 +220,7 @@ def _map_tx_type(tx: Transaction) -> str:
     return t  # fallback if unexpected
 
 
-def _determine_asset(db: Session, tx: Transaction) -> str:
+def _determine_asset(accounts: dict, tx: Transaction) -> str:
     """
     Determine the transaction currency based on the type & account currency:
       - Deposit => to_acct currency
@@ -228,8 +228,8 @@ def _determine_asset(db: Session, tx: Transaction) -> str:
       - Buy => to_acct currency
       - Transfer => from_acct currency (assuming same currency on both)
     """
-    from_acct = db.query(Account).filter(Account.id == tx.from_account_id).first()
-    to_acct = db.query(Account).filter(Account.id == tx.to_account_id).first()
+    from_acct = accounts.get(tx.from_account_id)
+    to_acct = accounts.get(tx.to_account_id)
 
     if tx.type == "Deposit":
         return to_acct.currency if (to_acct and to_acct.currency) else "BTC"
@@ -259,17 +259,16 @@ def _map_description(tx: Transaction) -> str:
     return tx.purpose or ""
 
 
-def _get_account_name(db: Session, account_id: int) -> str:
+def _get_account_name(accounts: dict, account_id: int) -> str:
     """
     Convert account_id to a user-friendly name.
-    If account_id=99 => "External", else fetch from DB or return "".
+    If account_id=99 => "External", else look up the prefetched accounts dict.
     """
-    logger.debug("DEBUG: _get_account_name called for account_id=%s", account_id)
     if not account_id:
         return ""
     if account_id == 99:
         return "External"
-    acct = db.query(Account).filter(Account.id == account_id).first()
+    acct = accounts.get(account_id)
     if acct:
         return acct.name or ""
     return ""

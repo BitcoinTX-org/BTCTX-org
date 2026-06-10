@@ -11,6 +11,7 @@ since the ledger references are handled in transaction or ledger services.
 
 from fastapi import APIRouter, Depends, HTTPException
 from typing import List
+from sqlalchemy.orm import Session
 from backend.schemas.account import AccountCreate, AccountUpdate, AccountRead
 from backend.services import account as account_service
 from backend.database import get_db
@@ -18,7 +19,7 @@ from backend.database import get_db
 router = APIRouter(tags=["accounts"])
 
 @router.get("/", response_model=List[AccountRead])
-def list_accounts(db = Depends(get_db)):
+def list_accounts(db: Session = Depends(get_db)):
     """
     Retrieve all Accounts in the system. For a single-user scenario,
     you might filter by that user's ID, but here we show them all.
@@ -26,7 +27,7 @@ def list_accounts(db = Depends(get_db)):
     return account_service.get_all_accounts(db)
 
 @router.get("/{account_id}", response_model=AccountRead)
-def get_account(account_id: int, db = Depends(get_db)):
+def get_account(account_id: int, db: Session = Depends(get_db)):
     """
     Retrieve a specific Account by its ID, or return 404 if not found.
     """
@@ -36,7 +37,7 @@ def get_account(account_id: int, db = Depends(get_db)):
     return account
 
 @router.post("/", response_model=AccountRead)
-def create_account(account: AccountCreate, db = Depends(get_db)):
+def create_account(account: AccountCreate, db: Session = Depends(get_db)):
     """
     Create a new Account. The request body (AccountCreate) includes:
       - user_id: the owner
@@ -49,7 +50,7 @@ def create_account(account: AccountCreate, db = Depends(get_db)):
     return new_account
 
 @router.put("/{account_id}", response_model=AccountRead)
-def update_account(account_id: int, account: AccountUpdate, db = Depends(get_db)):
+def update_account(account_id: int, account: AccountUpdate, db: Session = Depends(get_db)):
     """
     Update an existing Account's 'name' or 'currency' (both optional).
     Returns 404 if no such account exists.
@@ -60,7 +61,7 @@ def update_account(account_id: int, account: AccountUpdate, db = Depends(get_db)
     return updated_account
 
 @router.delete("/{account_id}", status_code=204)
-def delete_account(account_id: int, db = Depends(get_db)):
+def delete_account(account_id: int, db: Session = Depends(get_db)):
     """
     Delete an existing Account by ID, returning 204 on success.
     If the account doesn't exist or cannot be deleted (e.g. has references),

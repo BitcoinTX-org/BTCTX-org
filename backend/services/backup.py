@@ -1,13 +1,15 @@
 # backend/services/backup.py
 
+import logging
 import os
 from pathlib import Path
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives import hashes, padding
 from cryptography.hazmat.backends import default_backend
-from cryptography.exceptions import InvalidKey
 import secrets
+
+logger = logging.getLogger(__name__)
 
 # === Constants ===
 # Use the same DATABASE_FILE env var as database.py for consistency
@@ -70,7 +72,7 @@ def make_backup(password: str, output_file: Path) -> None:
     with open(output_file, "wb") as f:
         f.write(salt + iv + encrypted)
 
-    print(f"✅ Backup created at: {output_file}")
+    logger.info(f"Backup created at: {output_file}")
 
 def restore_backup(password: str, encrypted_file: Path) -> None:
     if not encrypted_file.exists():
@@ -92,4 +94,4 @@ def restore_backup(password: str, encrypted_file: Path) -> None:
     with open(DB_PATH, "wb") as f:
         f.write(decrypted)
 
-    print(f"✅ Database restored from: {encrypted_file}")
+    logger.info(f"Database restored from: {encrypted_file}")
