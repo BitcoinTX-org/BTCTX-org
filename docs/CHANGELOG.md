@@ -4,7 +4,11 @@ All notable changes to BitcoinTX are documented in this file.
 
 ## [Unreleased]
 
-### 2026 Modernization (June 2026) — requires minor version bump (v0.6.0)
+---
+
+## [v0.6.0] - 2026-06-10 - 2026 Modernization
+
+### 2026 Modernization (June 2026)
 
 #### Security / Dependencies (conservative pass: React 18 + Vite 6 retained)
 - **Backend**: fastapi 0.115.8→0.121.3, starlette pinned 0.49.3 (CVE-2025-62727 HIGH StaticFiles Range-header DoS, CVE-2025-54121), python-multipart 0.0.20→0.0.32 (CVE-2026-42561 HIGH + 2), cryptography 44.0.2→46.0.7 (CVE-2026-26007 HIGH), pypdf 5.4.0→6.13.1 (~20 DoS CVEs; 5.x line unmaintained), reportlab 4.4.7→4.4.10 (4.5.x deliberately skipped — PDF output drift risk), uvicorn 0.49.0, sqlalchemy 2.0.50, requests ==2.34.2, python-dotenv 1.2.2, pytest 8.4.2; pydantic deliberately held at 2.12.5. Deferred majors documented in MAINTENANCE.md "Deferred Updates".

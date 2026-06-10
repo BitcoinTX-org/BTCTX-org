@@ -216,10 +216,9 @@ git push plebrick master --tags  # Sync backup at releases
 ```
 
 ### Current Version
-- **Latest Tag:** `v0.5.5` (2025-01-17)
-- **Status:** Stable release with transaction edit fix for macOS desktop app
-- **Docker Image:** `b1ackswan/btctx:v0.5.5` (also `latest`)
-- **Next Release:** `v0.6.0` (2026 modernization; minor bump required by Form 8949 mapping changes)
+- **Latest Tag:** `v0.6.0` (2026-06-10)
+- **Status:** 2026 modernization release (deps/CVEs, 2025 IRS form fixes, backend cleanup, UI polish, desktop launch fix)
+- **Docker Image:** `b1ackswan/btctx:v0.5.5` is latest on Docker Hub (v0.6.0 multi-arch push pending)
 - **Target Release:** `v1.0.0`
 
 ---

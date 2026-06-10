@@ -1,6 +1,6 @@
 # Roadmap
 
-## Current Status: v0.5.5 (latest tag) + 2026 modernization complete on `feature/2026-modernization` ✅
+## Current Status: v0.6.0 - 2026 Modernization ✅
 
 Buy from Bank, native macOS desktop app, and the June 2026 modernization pass (deps, 2025 IRS forms, backend cleanup, UI polish). Test suite: 164 pytest tests + pre-commit static checks.
 
@@ -22,10 +22,9 @@ Buy from Bank, native macOS desktop app, and the June 2026 modernization pass (d
 
 ---
 
-## Next Up: v0.6.0 - 2026 Modernization Release
+## v0.6.0 - 2026 Modernization Release (shipped 2026-06-10)
 
-Completed June 2026 on `feature/2026-modernization` (minor bump required by
-Form 8949 field-mapping changes per CLAUDE.md convention):
+Minor bump required by Form 8949 field-mapping changes per CLAUDE.md convention:
 - [x] CVE-driven dependency refresh (backend/frontend/desktop; React 18 + Vite 6 retained)
 - [x] 2025 IRS form templates verified against final irs.gov releases; fixed
       2025 11-row page capacity + multi-page Part I/II handling
