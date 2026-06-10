@@ -51,7 +51,7 @@
 
 /* Error message styling */
 .error-text {
-  color: #e74c3c;
+  color: var(--color-error);
   font-size: 0.75rem;
   margin-top: 0.25rem;
 }
@@ -96,28 +96,28 @@
 
 /* @keyframes spin is now centralized in theme.css */
 
-/* Styling for the delete button */
+/* Styling for the delete button - uses the theme's error palette */
 .delete-button {
-  background-color: #d9534f; /* Red color */
+  background-color: var(--color-error-muted);
   color: white;
   border: none;
-  border-radius: 6px; /* Slightly larger rounded corners */
+  border-radius: var(--radius-md);
   padding: 0.85rem 1.5rem; /* Increase padding to make it larger */
   font-size: 1rem; /* Maintain readable text */
   font-weight: bold;
   cursor: pointer;
-  transition: background-color 0.2s ease, transform 0.1s ease;
+  transition: background-color var(--transition-base), transform var(--transition-fast);
 }
 
 /* Hover effect */
 .delete-button:hover {
-  background-color: #c9302c; /* Darker red */
+  background-color: var(--color-error-hover);
   transform: scale(1.05); /* Slight scale-up effect */
 }
 
 /* Active click effect */
 .delete-button:active {
-  background-color: #a52a2a; /* Even darker red */
+  background-color: var(--color-error-hover);
   transform: scale(0.98); /* Slightly shrink */
 }
 
@@ -157,7 +157,11 @@
 
 .refresh-button:hover {
   background-color: var(--color-accent);
+  border-color: var(--color-accent);
   color: #000;
+}
+.refresh-button:active {
+  transform: scale(0.98);
 }
 
 /* Approximate value display (e.g., ~$USD) */

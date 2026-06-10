@@ -78,16 +78,20 @@
 
 /* 2) Error/Retry styling */
 .error-section {
-  color: red;
+  color: var(--color-error);
   margin-top: 1rem;
 }
 .retry-btn {
-  background-color: #666;
+  background-color: var(--color-gray-500);
   color: #fff;
   border: none;
   padding: 0.4rem 0.8rem;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
+  transition: background-color var(--transition-base);
+}
+.retry-btn:hover {
+  background-color: var(--color-gray-600);
 }
 
 /* 3) Transactions List & Date Groups */
@@ -105,9 +109,20 @@
   font-family: var(--font-display);
   font-size: 1rem;
   font-weight: 600;
-  letter-spacing: -0.02em;
+  letter-spacing: var(--tracking-tight);
   color: var(--color-text-dim);
   margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+/* Hairline that carries the eye across the group */
+.date-heading::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(to right, var(--color-border-strong), transparent);
 }
 
 /* 4) Transaction Row / Card */
@@ -133,28 +148,30 @@
     We'll color them differently using nth-child. 
     No direct background here, so nth-child can do it.
   */
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 6px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
   margin-bottom: 0.4rem;
   font-size: 1rem;
-  transition: background-color 0.2s;
+  font-variant-numeric: tabular-nums;
+  transition: background-color var(--transition-base), border-color var(--transition-base);
 }
 
 /* Alternating row background */
 .transaction-card:nth-child(odd) {
-  background-color: #242424;
+  background-color: var(--color-surface);
 }
 .transaction-card:nth-child(even) {
-  background-color: #2a2a2a;
+  background-color: var(--color-surface-hover);
 }
 
 /* Hover effect */
 .transaction-card:hover {
-  background-color: #3a3a3a; /* slightly lighter on hover */
+  background-color: var(--color-surface-active);
+  border-color: rgba(229, 180, 90, 0.18);
 }
 /* Touch feedback */
 .transaction-card:active {
-  background-color: #3a3a3a;
+  background-color: var(--color-surface-active);
 }
 
 /* Some columns might wrap text if long */
@@ -165,25 +182,26 @@
 
 /* Gains in green, losses in red */
 .gain-green {
-  color: #0b9981;
+  color: var(--color-success-muted);
 }
 .loss-red {
-  color: #b33b44;
+  color: var(--color-error-muted);
 }
 
 /* Edit button on right */
 .edit-button {
-  background-color: #333;
+  background-color: var(--color-gray-800);
   color: #fff;
-  border: 1px solid #666;
-  border-radius: 4px;
+  border: 1px solid var(--color-gray-500);
+  border-radius: var(--radius-sm);
   padding: 0.4rem 0.6rem;
   cursor: pointer;
   font-size: 0.9rem;
-  transition: background-color 0.2s;
+  transition: background-color var(--transition-base), color var(--transition-base), border-color var(--transition-base);
 }
 .edit-button:hover {
   background-color: var(--color-accent);
+  border-color: var(--color-accent);
   color: #000;
 }
 .edit-button:active {
@@ -328,21 +346,22 @@
 
 /* Buttons for pagination controls */
 .pagination-button {
-  background-color: #333;
+  background-color: var(--color-gray-800);
   color: #fff;
-  border: 1px solid #666;
+  border: 1px solid var(--color-gray-500);
   margin: 0 0.5rem;
   padding: 0.4rem 0.8rem;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: background-color var(--transition-base), border-color var(--transition-base);
 }
 
 .pagination-button:hover {
-  background-color: #4a4a4a;
+  background-color: var(--color-gray-600);
+  border-color: var(--color-gray-400);
 }
 .pagination-button:active:not(:disabled) {
-  background-color: #555;
+  background-color: var(--color-gray-500);
   transform: scale(0.98);
 }
 

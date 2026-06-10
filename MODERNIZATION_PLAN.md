@@ -62,7 +62,7 @@
 - [x] Generate filled sample 2025 forms (2026-06-10): **`baseline-pdfs/2025-samples/IRS_2025_Form8949_ScheduleD_SAMPLE.pdf`** (4pp) — realistic data: 2 buys (0.25 @ $23,750 + $25 fee; 0.15 @ $15,300 + $20 fee), 1 short sell (0.2 BTC, $21,500 gross − $30 fee), 1 long-term Spent withdrawal (0.4 BTC held Nov 2023 → Sep 2025, $38,000 proceeds, $14,000 basis). Verified: Part I row + Part II row + SD totals all correct.
 - [x] Field mappings changed (rows_per_page + multi-sheet pairing) → **minor version bump required at next release** (per CLAUDE.md convention, e.g. v0.6.0)
 - [x] ⏸ WAIT FOR USER — sample PDF opened for visual inspection 2026-06-10; **Phase 3 changes intentionally left UNCOMMITTED pending approval.** END OF GOAL RUN 2.
-- [ ] (After user approval) Commit Phase 3 work
+- [x] (After user approval) Commit Phase 3 work — user approved by launching Goal Run 3; committed `98699fb` (2026-06-10)
 
 ---
 
@@ -70,14 +70,14 @@
 
 ### Phase 4 — UI polish (existing theme, not redesign)
 
-- [ ] Use the frontend-design skill. Refine `frontend/src/styles/theme.css` first: typography scale, spacing rhythm, color consistency
-- [ ] Polish per-page CSS (app, dashboard, transactions, transactionForm, transactionPanel, reports, settings, login, converter): hover/focus/active states, visual hierarchy, micro-interactions
-- [ ] MUST PRESERVE: layout structure, all routes, hooks (`useAccounts`, `useApiCall`, `useBtcPrice`), Toast system, mobile breakpoints (800/768/480px), 44px touch targets, `desktopDownload.ts` pywebview integration
-- [ ] Start dev server; browser-verify EVERY page at desktop width: login, dashboard, transactions (incl. create + edit panel), reports (generate a real PDF), settings, sats converter
-- [ ] Browser-verify the same pages at mobile widths (800/768/480px)
-- [ ] [GATE] `npm run build` + `npm run lint` green; all pages verified working in browser
-- [ ] Review-fix-reverify cycle: re-read Phase 4 diff, run /simplify, fix all findings, re-verify in browser; repeat until zero findings
-- [ ] Commit Phase 4 work
+- [x] theme.css refined (2026-06-10, frontend-design skill, polish-not-redesign): added missing `--color-text-dim` token (was referenced in 2 files but UNDEFINED), easing curves (--ease-out/--ease-in-out) wired into transition tokens, letter-spacing tokens, layered shadows + shared --shadow-btn* button-depth tokens, .tnum utility, slide-in-right/fade-in keyframes, prefers-reduced-motion guard, gold-tinted ::selection, theme-matched thin scrollbars.
+- [x] Per-page CSS polished (2026-06-10): app — nav active state gets gold inset underline (layout-shift-free), tokenized grays, easing on all states; dashboard — card hover lift, tabular numerals on all figures incl. BTC price (display face), resting card border; transactions — date headings get gradient hairline, row hover gold border hint, fixed raw `red`, gain/loss → theme tokens, tabular numerals, edit/pagination button polish; login — REMOVED duplicated rule blocks (login-input/label/form-group/toggle-btn defined twice), fixed 2 stale pre-rebrand gold glows (rgba 217,167,95 → token), display font on title, error → token; reports — stale #d9a75f → accent token, radio focus-visible ring, section border, tabular year input; transactionForm — error/delete reds → theme error palette, refresh button states; transactionPanel — slide-in + overlay fade-in animations, button depth parity with accent-btn, display font on header, tokenized; settings — warning/error literals → tokens; converter — stale glow → token, toggle-btn tokenized.
+- [x] PRESERVED (verified by diff scope — zero TSX/layout/breakpoint changes): layout structure, routes, hooks, Toast, 800/768/480px breakpoints, 44px targets, desktopDownload.ts untouched.
+- [x] Browser-verified every page at 1440px (2026-06-10, Playwright headless vs the production build served by the backend): login, dashboard (incl. sidebar sats converter + calculator), transactions, add-transaction side panel (slide-in works), reports — **real PDF generated through the UI** (CompleteTaxReport_2024.pdf, valid %PDF), settings. Screenshots in /tmp/btctx-ui-verify/shots/.
+- [x] Browser-verified the same pages at 800/768/480px — mobile nav grid, ::before row labels, full-width buttons, 44px targets all intact. Only console messages: the expected pre-login 401 auth probe.
+- [x] [GATE] `npm run lint` ✅ (0 errors, same 2 pre-existing warnings) + `npm run build` ✅ (vite 6.4.3) + all pages browser-verified — **PASSED 2026-06-10**.
+- [x] Review-fix-reverify cycle (2026-06-10): 4-angle CSS review pass. **1 HIGH finding caught and fixed**: `animation-fill-mode: both` on the slide-in panel left a persistent transform, making the panel the containing block for the fixed-position discard modal (would have broken its viewport centering + click interception) — fill mode dropped, fix verified in browser (modal bounding box confirmed viewport-centered). LOW fixes: toggle-password font-size pixel parity (0.85rem), login input literals tokenized, remaining #555 actives tokenized, dropped width-changing font-weight on active nav (kept layout-shift-free underline), spinners exempted from reduced-motion freeze (slow spin instead of frozen ring), removed dead .tnum utility. Convergence sweep clean; lint 0 errors; rebuild clean.
+- [x] Commit Phase 4 work (2026-06-10)
 
 ### Phase 5 — Final QA + docs
 

@@ -114,7 +114,7 @@
 .settings-message {
   margin-top: 1rem;
   font-size: 0.9rem;
-  color: #ff9f0a;
+  color: var(--color-warning);
 }
 
 /* Nicer file input styling */
@@ -262,7 +262,7 @@ input[type="file"]::file-selector-button:hover {
 }
 
 .import-warning-count {
-  color: #ff9f0a;
+  color: var(--color-warning);
 }
 
 .import-errors,
@@ -280,7 +280,7 @@ input[type="file"]::file-selector-button:hover {
 
 .import-warnings {
   background: rgba(255, 159, 10, 0.15);
-  border: 1px solid #ff9f0a;
+  border: 1px solid var(--color-warning);
 }
 
 .import-errors ul,
@@ -290,11 +290,11 @@ input[type="file"]::file-selector-button:hover {
 }
 
 .import-error-item {
-  color: #ff6961;
+  color: var(--color-error);
 }
 
 .import-warning-item {
-  color: #ffb84d;
+  color: var(--color-warning-muted);
 }
 
 .import-preview-table-container {

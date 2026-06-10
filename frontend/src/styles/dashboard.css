@@ -35,19 +35,21 @@
   border-radius: var(--radius-xl);
   display: flex;
   flex-direction: column;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
-  border: 1px solid transparent;
+  box-shadow: var(--shadow-md);
+  transition: transform var(--transition-base), box-shadow var(--transition-base), border-color var(--transition-base);
+  border: 1px solid var(--color-border);
 }
 
-/* Card hover effect - subtle gold accent border */
+/* Card hover effect - gentle lift + subtle gold accent border */
 .card:hover {
+  transform: translateY(-2px);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4),
               0 0 0 1px rgba(229, 180, 90, 0.1);
   border-color: rgba(229, 180, 90, 0.15);
 }
 /* Touch feedback */
 .card:active {
+  transform: translateY(0);
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
   border-color: rgba(229, 180, 90, 0.2);
 }
@@ -63,7 +65,7 @@
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   padding-bottom: 0.5rem;
   font-weight: 600;
-  letter-spacing: -0.02em;
+  letter-spacing: var(--tracking-tight);
 }
 
 /* Subheadings (Fees, etc.) */
@@ -74,6 +76,12 @@
   margin: 1rem 0 0.5rem;
   font-weight: 500;
   letter-spacing: -0.01em;
+}
+
+/* Financial figures stay column-aligned as values change */
+.card p span,
+.card p em {
+  font-variant-numeric: tabular-nums;
 }
 
 /* Standard text within cards */
@@ -138,8 +146,11 @@
 }
 
 .btc-price-value {
+  font-family: var(--font-display);
   font-size: 3rem;
   font-weight: 700;
+  letter-spacing: var(--tracking-tight);
+  font-variant-numeric: tabular-nums;
   color: var(--color-bitcoin);
   position: relative;      /* above watermark */
   z-index: 1;
@@ -152,6 +163,7 @@
   gap: 0.5rem;
   color: var(--color-text-secondary);
   font-size: 0.9rem;
+  font-variant-numeric: tabular-nums;
   margin-top: auto;        /* push to bottom */
   padding-top: 1rem;
 }
