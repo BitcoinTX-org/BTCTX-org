@@ -194,7 +194,17 @@ gh release create vX.Y.Z --repo BitcoinTX-org/BTCTX-org --title "..." --notes ".
 gh release create vX.Y.Z --repo PlebRick/BTCTX --title "..." --notes "..."
 gh release upload vX.Y.Z asset.dmg --repo BitcoinTX-org/BTCTX-org
 gh release upload vX.Y.Z asset.dmg --repo PlebRick/BTCTX
+./scripts/release-docker.sh vX.Y.Z   # Docker Hub push (enforces StartOS wrapper tag contract)
 ```
+
+**Docker tag contract (StartOS wrapper dependency):** Every release must push
+`b1ackswan/btctx:vX.Y.Z` (exact `^v[0-9]+\.[0-9]+\.[0-9]+$`, no -rc/-beta) as a
+multi-arch (amd64+arm64) manifest. Version tags are immutable — never re-push
+different bytes under an existing tag; cut a new patch version instead. `:latest`
+is convenience only and must never be the only tag. The wrapper
+(PlebRick/BTCTX-StartOS) pins the version tag in its manifest and auto-detects
+new releases from Docker Hub. Use `scripts/release-docker.sh`, which enforces
+all of this. Full details: [docs/STARTOS_COMPATIBILITY.md](docs/STARTOS_COMPATIBILITY.md).
 
 ### Branches
 - `develop` - Active development, push here regularly
@@ -481,9 +491,9 @@ cd frontend && npm run build
 docker build -t btctx .
 docker run -p 80:80 -v btctx-data:/data btctx
 
-# Multi-arch build for production (required for StartOS compatibility)
-docker buildx build --platform linux/amd64,linux/arm64 \
-  -t b1ackswan/btctx:latest --push .
+# Multi-arch release build for production (required for StartOS compatibility;
+# always use the script — it enforces the wrapper's pinned-version-tag contract)
+./scripts/release-docker.sh vX.Y.Z
 ```
 
 > See [docs/STARTOS_COMPATIBILITY.md](docs/STARTOS_COMPATIBILITY.md) for full multi-arch build requirements.
