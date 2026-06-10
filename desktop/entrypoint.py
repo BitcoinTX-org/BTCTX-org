@@ -88,7 +88,11 @@ def wait_for_backend(port: int, timeout: float = 30.0) -> bool:
     import urllib.request
     import urllib.error
 
-    url = f"http://127.0.0.1:{port}/api/accounts/"
+    # Poll the SPA root: it serves index.html without auth. API routes are
+    # router-level auth-protected since 2026-02 and return 401, which urllib
+    # raises as HTTPError — polling one of those would spin until timeout
+    # and the window would never be created.
+    url = f"http://127.0.0.1:{port}/"
     start_time = time.time()
     delay = 0.1
 
