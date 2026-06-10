@@ -218,7 +218,7 @@ git push plebrick master --tags  # Sync backup at releases
 ### Current Version
 - **Latest Tag:** `v0.6.0` (2026-06-10)
 - **Status:** 2026 modernization release (deps/CVEs, 2025 IRS form fixes, backend cleanup, UI polish, desktop launch fix)
-- **Docker Image:** `b1ackswan/btctx:v0.5.5` is latest on Docker Hub (v0.6.0 multi-arch push pending)
+- **Docker Image:** `b1ackswan/btctx:v0.6.0` and `latest` on Docker Hub (multi-arch: amd64 + arm64, pushed 2026-06-10)
 - **Target Release:** `v1.0.0`
 
 ---
