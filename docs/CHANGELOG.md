@@ -4,6 +4,32 @@ All notable changes to BitcoinTX are documented in this file.
 
 ## [Unreleased]
 
+### 2026 Modernization (June 2026) — requires minor version bump (v0.6.0)
+
+#### Security / Dependencies (conservative pass: React 18 + Vite 6 retained)
+- **Backend**: fastapi 0.115.8→0.121.3, starlette pinned 0.49.3 (CVE-2025-62727 HIGH StaticFiles Range-header DoS, CVE-2025-54121), python-multipart 0.0.20→0.0.32 (CVE-2026-42561 HIGH + 2), cryptography 44.0.2→46.0.7 (CVE-2026-26007 HIGH), pypdf 5.4.0→6.13.1 (~20 DoS CVEs; 5.x line unmaintained), reportlab 4.4.7→4.4.10 (4.5.x deliberately skipped — PDF output drift risk), uvicorn 0.49.0, sqlalchemy 2.0.50, requests ==2.34.2, python-dotenv 1.2.2, pytest 8.4.2; pydantic deliberately held at 2.12.5. Deferred majors documented in MAINTENANCE.md "Deferred Updates".
+- **Frontend**: vite 6.4.3 (4 dev-server CVEs), axios 1.17.0 (CVE-2026-25639), react-router-dom 7.17.0 (SPA open-redirect/XSS), typescript 5.9.3, eslint 9.39.4; removed obsolete @types/react-router-dom; `npm audit` now reports 0 vulnerabilities.
+- **Desktop**: pyinstaller >=6.20.0, pywebview >=6.2.1 (rebuild + save_file bridge check due at next .app build).
+
+#### Fixed
+- **2025 Form 8949 row capacity**: the 2025 IRS template holds 11 rows per page (2024: 14); the hardcoded 14-row chunking would have silently dropped rows 12-14 on 2025 filings (pdftk ignores unknown fields). Row capacity is now part of the year-specific field config.
+- **Form 8949 multi-page handling**: overflow pages were numbered continuously (f1_, f2_, f3_...), but templates only define Page1 (Part I/short-term) and Page2 (Part II/long-term) fields — a second short-term chunk landed in the long-term table and later chunks vanished. Short/long chunks are now paired onto shared template-copy sheets, matching the paper form.
+- Bundled 2025 templates verified MD5-identical to the final irs.gov releases (no draft markers).
+
+#### Changed (behavior-preserving backend quality pass)
+- Dead code removed (unused `fill_8949_multi_page`, legacy `AccountType` enum, duplicate `get_db`, debug prints, no-op `group_id` write); duplication consolidated (CSV upload validation, debug serializers, deposit aggregation, Schedule D field mapping); N+1 queries fixed in the transaction-history report (was 4 Account queries per row) and account balances; root-logger `basicConfig` calls replaced with module loggers.
+
+#### UI Polish (existing dark theme, CSS-only)
+- Design tokens: easing curves, letter-spacing, layered shadows, missing `--color-text-dim` defined; tabular numerals on all financial figures; gold active-nav underline; dashboard card hover lift; transaction date-heading hairlines; side-panel slide-in animation; `prefers-reduced-motion` support; theme-matched scrollbars; login.css duplicated rule blocks removed; stale pre-rebrand colors tokenized. Browser-verified at 1440/800/768/480px; layout, breakpoints, and 44px touch targets unchanged.
+
+#### Testing
+- New `backend/tests/test_2025_forms.py` (6 tests) incl. an 11-row capacity regression test; suite now **164 tests** (was 158).
+- New PDF baseline gate `baseline-pdfs/regen_and_diff.sh`: regenerates all three reports against a frozen seed dataset and text-diffs them against committed baselines (run after every modernization phase; output verified equivalent throughout — a documented price-provider variant baseline covers live BTC-price variance in transfer-fee valuations).
+
+### Test Isolation & Backups (February 2026)
+- Test suite isolated from the production database (FastAPI TestClient + temp SQLite via dependency override; no running backend needed for most tests)
+- Daily encrypted-safe SQLite backup script `scripts/backup-db.sh` (cron 3 AM, 60-day retention)
+
 ### Added
 - **PDF Content Verification Test Suite**: `backend/tests/test_pdf_content.py` with 23 new tests
   - Uses `pypdf` to extract and verify actual PDF content, not just file generation

@@ -3,7 +3,7 @@
 > This file provides context for AI assistants (Claude, etc.) working on this project.
 > It should be updated after significant changes to maintain continuity across sessions.
 
-**Last Updated:** 2026-02-14
+**Last Updated:** 2026-06-10
 
 ---
 
@@ -219,11 +219,26 @@ git push plebrick master --tags  # Sync backup at releases
 - **Latest Tag:** `v0.5.5` (2025-01-17)
 - **Status:** Stable release with transaction edit fix for macOS desktop app
 - **Docker Image:** `b1ackswan/btctx:v0.5.5` (also `latest`)
+- **Next Release:** `v0.6.0` (2026 modernization; minor bump required by Form 8949 mapping changes)
 - **Target Release:** `v1.0.0`
 
 ---
 
 ## Recent Changes
+
+### Session: 2026-06-09/10 (2026 Modernization — branch `feature/2026-modernization`)
+1. **Conservative dependency pass** (CVE-driven; React 18 / Vite 6 / pydantic 2.12 retained)
+   - Backend: fastapi 0.121.3, starlette pinned 0.49.3, cryptography 46.0.7, pypdf 6.13.1, python-multipart 0.0.32, reportlab 4.4.10 (NOT 4.5.x — PDF drift risk), others patch/minor
+   - Frontend: vite 6.4.3, axios 1.17.0, react-router-dom 7.17.0, TS 5.9.3; `npm audit` = 0 vulnerabilities
+   - Deferred majors + unblock conditions documented in `docs/MAINTENANCE.md` ("Deferred Updates")
+2. **2025 IRS forms verified and fixed** (⚠ requires minor version bump at release → v0.6.0)
+   - Bundled 2025 templates MD5-identical to final irs.gov releases
+   - Fixed: 2025 form holds 11 rows/page (was chunked by 14 → silent row loss); fixed multi-page handling (short→Part I, long→Part II on shared sheets; continuous f3_+ page numbering wrote to nonexistent fields)
+   - New `backend/tests/test_2025_forms.py` (6 tests); **suite now 164 tests**
+3. **Backend quality pass** (behavior-preserving): dead code removed, duplication consolidated, N+1s fixed in transaction-history report + account balances, module loggers
+4. **UI polish** (CSS-only, dark theme): design tokens (easing/tracking/shadows), tabular numerals on figures, active-nav underline, panel slide-in, reduced-motion support; browser-verified at 1440/800/768/480px
+5. **PDF safety net**: `baseline-pdfs/regen_and_diff.sh` regenerates the three reports from a frozen seed and text-diffs vs committed baselines (PASS after every phase)
+6. **Test environment notes**: venv is `desktop/.venv` (Python 3.11); run pytest with `--ignore=backend/tests/test_requests.py --ignore=backend/tests/test_transactions.py` (stale live-server scripts); 7 auth tests still need a live backend on :8000 (start one with a temp `DATABASE_FILE`); pre-commit API section deliberately disabled (`test_backdated_fifo.py` sends delete_all to :8000 — production-wipe hazard)
 
 ### Session: 2026-02-14 (Test Isolation & Backups)
 1. **Test Suite Isolated from Production Database**
@@ -412,13 +427,14 @@ git push plebrick master --tags  # Sync backup at releases
 ### Deferred Items
 - [x] ~~Edge cases in FIFO calculations~~ (covered by pre-commit tests)
 - [x] ~~Review PDF calculations for accuracy~~ (verified, fixed Form 8949 non-taxable exclusion)
-- [ ] 2025 IRS form template updates (when released)
+- [x] ~~2025 IRS form template updates~~ (verified final + capacity/multi-page fixes, June 2026)
 
 ### Planned Features
 - [ ] Multi-user support (optional)
 - [ ] CSV import merge with existing data (Phase 2)
 
 ### Completed Recently
+- [x] 2026 modernization (Jun 2026) - CVE-driven dep refresh, 2025 form fixes, backend cleanup, UI polish, 164 tests
 - [x] Test isolation from production DB (Feb 2026) - TestClient + temp DB, no live backend needed
 - [x] Daily database backups (Feb 2026) - `scripts/backup-db.sh`, cron at 3 AM, 60-day retention
 - [x] Comprehensive test suite (Jan 2025) - 158 pytest tests + 17 pre-commit checks
@@ -478,12 +494,18 @@ docker buildx build --platform linux/amd64,linux/arm64 \
 **Tests are fully isolated** — they use FastAPI `TestClient` with a temporary SQLite database via `app.dependency_overrides[get_db]`. No running backend required, and the production database is never touched.
 
 ```bash
-# Run all 158 tests (no backend needed)
-PYTHONPATH=/home/ubuntu76/Projects/BTCTX-org \
-  .venv/bin/pytest backend/tests/ -v --tb=short
+# Run all 164 tests from the repo root (venv lives at desktop/.venv)
+# Note: 7 TestAuthEndpoints tests need a live backend on :8000 — start one
+# against a TEMP database first (never the production DB):
+#   DATABASE_FILE=/tmp/btctx-test.db PYTHONPATH=$(pwd) \
+#     desktop/.venv/bin/uvicorn backend.main:app --port 8000 &
+PYTHONPATH=$(pwd) desktop/.venv/bin/pytest backend/tests/ \
+  --ignore=backend/tests/test_requests.py \
+  --ignore=backend/tests/test_transactions.py \
+  -v --tb=short
 
 # Run a specific test file
-.venv/bin/pytest backend/tests/test_comprehensive_transactions.py -v
+PYTHONPATH=$(pwd) desktop/.venv/bin/pytest backend/tests/test_comprehensive_transactions.py -v
 ```
 
 **Test architecture:**
@@ -505,7 +527,9 @@ PYTHONPATH=/home/ubuntu76/Projects/BTCTX-org \
 python3 backend/tests/pre_commit_tests.py --no-api
 ```
 
-**What it tests (17 checks):**
+**What it tests:** (static checks only — the API section is currently disabled;
+`check_backend_running` can't succeed against auth-protected routes, and enabling it
+would run a destructive legacy script against :8000. See ROADMAP housekeeping item.)
 - Docker/StartOS compatibility (no hardcoded paths, DATABASE_FILE env var, Python 3.9)
 - Transaction/FIFO integrity (scorched earth recalculation, backdated transactions)
 - Report generation (Form 8949, Schedule D, non-taxable exclusions)

@@ -1,8 +1,8 @@
 # Roadmap
 
-## Current Status: v0.5.4 - Buy from Bank Feature ✅
+## Current Status: v0.5.5 (latest tag) + 2026 modernization complete on `feature/2026-modernization` ✅
 
-Buy transactions can now originate from Bank account (auto-buy support). Native macOS desktop app complete. Comprehensive test suite with 136 pytest tests + 17 pre-commit checks.
+Buy from Bank, native macOS desktop app, and the June 2026 modernization pass (deps, 2025 IRS forms, backend cleanup, UI polish). Test suite: 164 pytest tests + pre-commit static checks.
 
 ### v0.5.x Features
 - **Buy from Bank**: Purchase BTC directly from Bank account (auto-buy/recurring)
@@ -22,15 +22,29 @@ Buy transactions can now originate from Bank account (auto-buy support). Native 
 
 ---
 
-## Next Up: v1.0.0 - Production Release
+## Next Up: v0.6.0 - 2026 Modernization Release
+
+Completed June 2026 on `feature/2026-modernization` (minor bump required by
+Form 8949 field-mapping changes per CLAUDE.md convention):
+- [x] CVE-driven dependency refresh (backend/frontend/desktop; React 18 + Vite 6 retained)
+- [x] 2025 IRS form templates verified against final irs.gov releases; fixed
+      2025 11-row page capacity + multi-page Part I/II handling
+- [x] Behavior-preserving backend cleanup (dead code, duplication, N+1s)
+- [x] Dark-theme UI polish (CSS-only; mobile breakpoints + touch targets preserved)
+- [x] Test suite grown to 164 tests + PDF baseline regression gate
+
+## Then: v1.0.0 - Production Release
 
 Polish and stabilize for production release.
 
 ### v1.0.0 Goals
 - [ ] Final QA pass on all features
-- [ ] 2025 IRS form template updates (when released by IRS)
+- [x] ~~2025 IRS form template updates~~ (verified final + fixed, June 2026)
 - [ ] Documentation review and updates
 - [ ] Performance optimization if needed
+- [ ] Test-suite housekeeping (with sign-off): convert `test_backdated_fifo.py`
+      to TestClient, delete stale `test_requests.py`/`test_transactions.py`,
+      re-enable the pre-commit API section
 
 ### Future (Post v1.0.0)
 - [ ] CSV import merge with existing data (Phase 2)
