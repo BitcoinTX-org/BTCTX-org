@@ -29,7 +29,7 @@ git log -3 --oneline  # See recent commits
 
 | Branch | Purpose | Status |
 |--------|---------|--------|
-| `feature/river-import` | River CSV import (merge with dedup) | Tested on real data; ready to merge |
+| `feature/river-import` | River CSV import (merge with dedup) | Merged + released in v0.7.0 |
 | `feature/buy-from-bank` | Allow Buy transactions from Bank account | Ready to merge |
 | `feature/macos-desktop` | macOS desktop app (PyInstaller + pywebview) | In progress |
 
@@ -229,9 +229,9 @@ git push plebrick master --tags  # Sync backup at releases
 ```
 
 ### Current Version
-- **Latest Tag:** `v0.6.0` (2026-06-10)
-- **Status:** 2026 modernization release (deps/CVEs, 2025 IRS form fixes, backend cleanup, UI polish, desktop launch fix)
-- **Docker Image:** `b1ackswan/btctx:v0.6.0` and `latest` on Docker Hub (multi-arch: amd64 + arm64, pushed 2026-06-10)
+- **Latest Tag:** `v0.7.0` (2026-06-10)
+- **Status:** River CSV import release (merge-with-dedup importer, preview UI, FMV autofill; 184 tests)
+- **Docker Image:** `b1ackswan/btctx:v0.7.0` and `latest` on Docker Hub (multi-arch: amd64 + arm64)
 - **Target Release:** `v1.0.0`
 
 ---

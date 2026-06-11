@@ -4,7 +4,11 @@ All notable changes to BitcoinTX are documented in this file.
 
 ## [Unreleased]
 
-### Added — River CSV Import (feature/river-import, June 2026)
+---
+
+## [v0.7.0] - 2026-06-10 - River CSV Import
+
+### Added — River CSV Import
 - **Import from River** (Settings page): upload a River bitcoin-activity CSV
   (river.com → Taxes & Documents) and merge it into a live ledger — unlike the
   onboarding CSV import, no empty-database requirement.
