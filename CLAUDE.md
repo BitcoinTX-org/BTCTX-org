@@ -29,11 +29,10 @@ git log -3 --oneline  # See recent commits
 
 | Branch | Purpose | Status |
 |--------|---------|--------|
-| `feature/river-import` | River CSV import (merge with dedup) | Merged + released in v0.7.0 |
 | `feature/buy-from-bank` | Allow Buy transactions from Bank account | Ready to merge |
 | `feature/macos-desktop` | macOS desktop app (PyInstaller + pywebview) | In progress |
 
-See [docs/RIVER_IMPORT_PLAN.md](docs/RIVER_IMPORT_PLAN.md) for the River import design and phase status.
+(`feature/river-import` was merged, released in v0.7.0, and deleted — see [docs/RIVER_IMPORT_PLAN.md](docs/RIVER_IMPORT_PLAN.md) for the design and phase status.)
 
 See [docs/MACOS_DESKTOP_APP.md](docs/MACOS_DESKTOP_APP.md) for complete desktop build documentation.
 See [docs/BUY_FROM_BANK_FEATURE.md](docs/BUY_FROM_BANK_FEATURE.md) for Buy from Bank feature details.
@@ -154,6 +153,7 @@ LotDisposal (FIFO consumption record)
 - IRS Form 8949 + Schedule D generation (pdftk)
 - Complete tax report (ReportLab)
 - Transaction history export (CSV/PDF)
+- **River CSV import** (merge into live ledger with dedup) - see [docs/RIVER_IMPORT_PLAN.md](docs/RIVER_IMPORT_PLAN.md)
 - Docker deployment on port 80
 - BTC price fetching with 3-source fallback
 - **macOS desktop app** (PyInstaller + pywebview) - see [docs/MACOS_DESKTOP_APP.md](docs/MACOS_DESKTOP_APP.md)
@@ -249,7 +249,8 @@ git push plebrick master --tags  # Sync backup at releases
    - **User data privacy:** real CSV exports live locally in `docs/*.csv` — gitignored (generic pattern, no filenames leaked); NEVER commit or reference their contents in code/tests/docs
 2. **Annual IRS form update runbook**: `docs/IRS_ANNUAL_FORM_UPDATE.md` (committed on develop) — follow it step-by-step each year; replaced stale section in IRS_FORM_GENERATION.md
 3. Phase 3 (account-activity CSV) DROPPED by owner decision — USD cash deposits stay manual (~3 trivial entries/month, not worth a second adapter); do not revive unless asked
-4. Release note for later: River import = new feature → minor version bump (v0.7.0) when released
+4. **Released as v0.7.0 same day**: merged to master, tagged, pushed to BOTH repos, GitHub releases with `BitcoinTX-0.7.0.dmg` on both, Docker Hub `b1ackswan/btctx:v0.7.0` + `latest` (multi-arch, wrapper contract verified via release-docker.sh)
+5. Cleanup: real CSV samples deleted from docs/ after validation; `docs/*.csv` gitignore rule retained for future samples; VS Code interpreter fixed (stale conda path → desktop/.venv, was breaking Pylance import resolution)
 
 ### Session: 2026-06-09/10 (2026 Modernization — branch `feature/2026-modernization`)
 1. **Conservative dependency pass** (CVE-driven; React 18 / Vite 6 / pydantic 2.12 retained)
@@ -456,9 +457,10 @@ git push plebrick master --tags  # Sync backup at releases
 
 ### Planned Features
 - [ ] Multi-user support (optional)
-- [ ] CSV import merge with existing data (Phase 2)
+- [x] ~~CSV import merge with existing data (Phase 2)~~ shipped for River in v0.7.0
 
 ### Completed Recently
+- [x] River CSV import (Jun 2026, v0.7.0) - merge-with-dedup importer, editable preview UI, FMV autofill; reconciled to River balance to the satoshi on real data; 184 tests
 - [x] 2026 modernization (Jun 2026) - CVE-driven dep refresh, 2025 form fixes, backend cleanup, UI polish, 164 tests
 - [x] Test isolation from production DB (Feb 2026) - TestClient + temp DB, no live backend needed
 - [x] Daily database backups (Feb 2026) - `scripts/backup-db.sh`, cron at 3 AM, 60-day retention

@@ -14,6 +14,7 @@ Buy from Bank, native macOS desktop app, and the June 2026 modernization pass (d
 - pdftk path resolution for bundled apps
 
 ### Previous Releases
+- v0.7.0: River CSV import (merge-with-dedup importer, preview UI, FMV autofill)
 - v0.5.0: Backend refactoring, Pydantic V2, dependency updates
 - v0.4.0: CSV template import
 - v0.3.2: Backup restore session fix
@@ -46,7 +47,7 @@ Polish and stabilize for production release.
       re-enable the pre-commit API section
 
 ### Future (Post v1.0.0)
-- [ ] CSV import merge with existing data (Phase 2)
+- [x] ~~CSV import merge with existing data (Phase 2)~~ shipped for River in v0.7.0 (dedup merge engine); generic-format merge unneeded for now
 - [ ] Column mapping UI for arbitrary exchange CSVs
 - [ ] Saved mapping presets for different exchange formats
 
@@ -55,7 +56,7 @@ Polish and stabilize for production release.
 ## Future Enhancements
 
 ### High Priority
-- [ ] **CSV import merge**: Phase 2 - merge with existing data
+- [x] **CSV import merge**: shipped in v0.7.0 as the River import dedup engine
 - [ ] **Improved error handling**: Better user feedback for failed operations
 
 ### Medium Priority
@@ -82,6 +83,7 @@ Polish and stabilize for production release.
   - Account-specific FIFO verification
 - [x] **Mobile responsiveness overhaul** - 10 CSS files, touch-friendly UI, 44px touch targets
 - [x] **Pre-commit test suite** - Docker/StartOS compat, FIFO integrity, report generation
+- [x] **v0.7.0: River CSV import** - Merge into live ledger with dedup, editable preview, FMV autofill (184 tests)
 - [x] **Desktop app download fixes** - Settings and Reports pages work in pywebview
 - [x] **pdftk path resolution** - Centralized module for macOS desktop compatibility
 - [x] **Frontend design system refactor** - Custom hooks, toast notifications, error boundaries, theme system
