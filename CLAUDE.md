@@ -29,8 +29,11 @@ git log -3 --oneline  # See recent commits
 
 | Branch | Purpose | Status |
 |--------|---------|--------|
+| `feature/river-import` | River CSV import (merge with dedup) | Tested on real data; ready to merge |
 | `feature/buy-from-bank` | Allow Buy transactions from Bank account | Ready to merge |
 | `feature/macos-desktop` | macOS desktop app (PyInstaller + pywebview) | In progress |
+
+See [docs/RIVER_IMPORT_PLAN.md](docs/RIVER_IMPORT_PLAN.md) for the River import design and phase status.
 
 See [docs/MACOS_DESKTOP_APP.md](docs/MACOS_DESKTOP_APP.md) for complete desktop build documentation.
 See [docs/BUY_FROM_BANK_FEATURE.md](docs/BUY_FROM_BANK_FEATURE.md) for Buy from Bank feature details.
@@ -234,6 +237,19 @@ git push plebrick master --tags  # Sync backup at releases
 ---
 
 ## Recent Changes
+
+### Session: 2026-06-10 (River CSV Import — branch `feature/river-import`)
+1. **River bitcoin-activity CSV import** (Phases 1–2 of docs/RIVER_IMPORT_PLAN.md)
+   - Backend: `services/river_import.py` (adapter + dedup engine), `routers/river_import.py` (`/api/import/river/preview` + `/execute`), `schemas/river_import.py`
+   - Frontend: `components/RiverImport.tsx` + `styles/riverImport.css`, section on Settings page
+   - Merges into a LIVE ledger (no empty-DB requirement); dedup = exact BTC amount + compatible type ±48h, fuzzy ±20% pass flags transfer near-matches for review; idempotent re-imports
+   - Buy funding (Bank vs Exchange USD) is a per-row preview toggle — owner decision: funding is a human choice per purchase, do NOT build predictors; heuristic defaults are best-effort from file recurrence (weak on small files — expected)
+   - FMV basis autofill on Interest/Income deposits via existing `get_historical_price`
+   - 20 new tests (synthetic fixtures), suite now 184; validated against real 1,197-row export (100% coverage); real import reconciled to River balance to the satoshi
+   - **User data privacy:** real CSV exports live locally in `docs/*.csv` — gitignored (generic pattern, no filenames leaked); NEVER commit or reference their contents in code/tests/docs
+2. **Annual IRS form update runbook**: `docs/IRS_ANNUAL_FORM_UPDATE.md` (committed on develop) — follow it step-by-step each year; replaced stale section in IRS_FORM_GENERATION.md
+3. Phase 3 pending: River account-activity CSV (USD deposits/withdrawals) — needs a sample export to spec columns
+4. Release note for later: River import = new feature → minor version bump (v0.7.0) when released
 
 ### Session: 2026-06-09/10 (2026 Modernization — branch `feature/2026-modernization`)
 1. **Conservative dependency pass** (CVE-driven; React 18 / Vite 6 / pydantic 2.12 retained)

@@ -98,3 +98,6 @@ baseline-pdfs/*
 desktop/build/
 desktop/dist/
 desktop/.venv/
+
+# --- Local data samples (real exports used as dev reference; never commit) ---
+docs/*.csv
