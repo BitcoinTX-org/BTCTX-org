@@ -6,6 +6,40 @@ All notable changes to BitcoinTX are documented in this file.
 
 ---
 
+## [v0.7.0] - 2026-06-10 - River CSV Import
+
+### Added — River CSV Import
+- **Import from River** (Settings page): upload a River bitcoin-activity CSV
+  (river.com → Taxes & Documents) and merge it into a live ledger — unlike the
+  onboarding CSV import, no empty-database requirement.
+  - Adapter maps every River row pattern: Buy, Sell, Interest/Income (BTC
+    interest on the River cash balance), tagged Withdrawals, and untagged
+    on-chain sends/receives (default to cold-storage Transfers, flippable to
+    Withdrawal/Deposit per row).
+  - **Dedup engine**: rows already in the ledger are matched (exact BTC amount,
+    compatible type, ±48h) and skipped; near-matches (transfers within ±20%)
+    are flagged for review and excluded by default. Re-importing overlapping
+    date ranges is safe and idempotent.
+  - Buy funding source (Bank vs Exchange USD) defaults from a file-recurrence
+    heuristic and is always a one-click toggle in the preview — by design the
+    user is the final classifier on every import.
+  - Interest/Income deposits get fair-market-value cost basis auto-filled from
+    the historical BTC price (3-source failover), marked "est." and editable.
+  - Atomic execute: all-or-nothing with server-side re-validation and a
+    double-submit guard.
+  - New endpoints `POST /api/import/river/preview` and
+    `POST /api/import/river/execute` (session-auth only).
+- 20 new tests (`backend/tests/test_river_import.py`, synthetic fixtures);
+  suite now **184 tests**. Verified against a real 1,197-row River export
+  (100% row coverage) and a live import reconciled to River's balance to the
+  exact satoshi and cent.
+- New runbook `docs/IRS_ANNUAL_FORM_UPDATE.md` for adding each year's IRS form
+  templates (official IRS URL patterns, MD5 verification, field-diff procedure,
+  per-year config and test checklist). `docs/IRS_FORM_GENERATION.md`'s stale
+  update section now points to it.
+
+---
+
 ## [v0.6.0] - 2026-06-10 - 2026 Modernization
 
 ### 2026 Modernization (June 2026)

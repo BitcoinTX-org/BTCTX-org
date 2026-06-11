@@ -33,7 +33,7 @@ BitcoinTX uses a **two-repository architecture** for StartOS deployment:
 │  - Dockerfile                                                   │
 │  - All application logic                                        │
 │                                                                 │
-│  Builds → Docker Hub: b1ackswan/btctx:latest                    │
+│  Builds → Docker Hub: b1ackswan/btctx:vX.Y.Z (+ :latest)        │
 └─────────────────────────────────────────────────────────────────┘
                               ↓
                     (Docker image is pulled by)
@@ -254,12 +254,41 @@ EXPOSE 80
 
 ### Build Command (Multi-Arch Required)
 
+Use the release script, which enforces the tag contract below:
+
+```bash
+./scripts/release-docker.sh v0.6.0
+```
+
+Or manually:
+
 ```bash
 # StartOS runs on ARM64 (Raspberry Pi) and x86_64
 docker buildx build --platform linux/amd64,linux/arm64 \
+  -t b1ackswan/btctx:vX.Y.Z \
   -t b1ackswan/btctx:latest \
   --push .
 ```
+
+### Docker Tag Contract (Wrapper Dependency)
+
+The StartOS wrapper (PlebRick/BTCTX-StartOS) pins our image by **version tag**
+in its manifest, and a daily job compares its pinned tag against Docker Hub to
+detect new releases. Every release MUST satisfy:
+
+1. **Pinned version tag:** Push `b1ackswan/btctx:vX.Y.Z` where the tag exactly
+   matches the git release tag and `^v[0-9]+\.[0-9]+\.[0-9]+$`. No `-rc`/`-beta`
+   suffixes on the Docker tag — the wrapper's automation only recognizes that
+   exact pattern.
+2. **Immutable version tags:** Never re-push different bytes under an existing
+   `vX.Y.Z` tag. The wrapper's releases are reproducible builds that assume a
+   tag always resolves to the same image. If a build needs fixing, cut a new
+   patch version.
+3. **Multi-arch manifest:** `linux/amd64` AND `linux/arm64` in a single
+   manifest list (`docker buildx --platform linux/amd64,linux/arm64`). The
+   StartOS package packs both architectures from the one version tag.
+4. **`:latest` is convenience only:** Push it alongside the version tag if you
+   like, but nothing depends on it anymore — it must never be the only tag.
 
 ### Container Filesystem Layout
 
@@ -395,8 +424,12 @@ docker start btctx-test
 ### 5. Build Multi-Arch
 
 ```bash
+# Preferred — enforces the Docker Tag Contract (pattern, immutability, multi-arch):
+./scripts/release-docker.sh vX.Y.Z
+
+# Manual equivalent:
 docker buildx build --platform linux/amd64,linux/arm64 \
-  -t b1ackswan/btctx:latest --push .
+  -t b1ackswan/btctx:vX.Y.Z -t b1ackswan/btctx:latest --push .
 ```
 
 ---
@@ -428,6 +461,17 @@ arch: ['aarch64', 'x86_64']
 3. **Test in Docker before pushing** - local dev doesn't catch these bugs
 4. **Build multi-arch images** - StartOS runs on ARM64 and x86_64
 5. **Coordinate wrapper updates** - if you change ports, paths, or env vars, update the wrapper repo too
+6. **Follow the Docker Tag Contract** - pinned immutable `vX.Y.Z` tag on every release (see "Docker Tag Contract" above)
+7. **Don't break the wrapper's install/health hooks** (coordinate with a wrapper release before changing any of these):
+   - App code lives at `/app` in the image, and `backend.database.create_tables()`
+     seeds the database including the default admin user. The wrapper calls this
+     function directly at install time to initialize the DB, then sets a randomly
+     generated admin password in the `users` table (columns `username`,
+     `password_hash`, bcrypt). Renaming that module/function or changing the
+     users table schema is a breaking change for the wrapper.
+   - The server must keep serving plain HTTP on the port uvicorn binds — the
+     wrapper health-checks `http://localhost:80/` and treats any HTTP response
+     as healthy.
 
 ---
 
@@ -435,7 +479,7 @@ arch: ['aarch64', 'x86_64']
 
 | What | Value |
 |------|-------|
-| Docker image | `b1ackswan/btctx:latest` |
+| Docker image | `b1ackswan/btctx:vX.Y.Z` (pinned by wrapper; `:latest` also pushed) |
 | Architectures | `linux/amd64`, `linux/arm64` |
 | Entry point | `backend.main:app` |
 | Port | 80 |

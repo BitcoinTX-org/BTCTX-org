@@ -57,13 +57,9 @@
     "weasyprint",
     "XXBTZUSD"
   ],
-  "python.pythonPath": "/opt/homebrew/Caskroom/miniforge/base/envs/bitcoin-tx/bin/python",
+  "python.defaultInterpreterPath": "${workspaceFolder}/desktop/.venv/bin/python",
   "python.envFile": "${workspaceFolder}/backend/.env",
-  "terminal.integrated.shellArgs.osx": [
-    "-l",
-    "-c",
-    "conda activate bitcoin-tx; exec bash"
-  ],
+  "python.analysis.extraPaths": ["${workspaceFolder}"],
   "python.testing.pytestEnabled": true,
   "python.testing.unittestEnabled": false,
 
