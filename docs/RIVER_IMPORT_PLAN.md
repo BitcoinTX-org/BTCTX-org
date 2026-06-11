@@ -1,7 +1,14 @@
 # River CSV Import — Implementation Plan
 
-> **Status:** Planned (not yet implemented)
-> **Branch when work starts:** `feature/river-import`
+> **Status:** Phases 1–2 SHIPPED on `feature/river-import` (2026-06-10);
+> verified on real data — post-import balances reconciled to River to the
+> exact satoshi/cent. Phase 3 (account-activity CSV) awaits a sample export.
+> **Design decision (owner):** buy funding source is inherently a per-purchase
+> human choice — no predictor can be reliable, so the preview toggle IS the
+> mechanism, and heuristic defaults are best-effort only. Note the recurrence
+> heuristic learns from the uploaded file, so on small incremental files most
+> buys default to Exchange USD; expect to flip the Bank-funded ones each import.
+> **Branch:** `feature/river-import`
 > **Goal:** Stop entering River transactions by hand. Periodically download
 > River's CSV export, upload it to BitcoinTX, review a preview of *new* rows,
 > click import.
