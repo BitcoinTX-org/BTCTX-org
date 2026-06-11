@@ -2,7 +2,9 @@
 
 > **Status:** Phases 1–2 SHIPPED on `feature/river-import` (2026-06-10);
 > verified on real data — post-import balances reconciled to River to the
-> exact satoshi/cent. Phase 3 (account-activity CSV) awaits a sample export.
+> exact satoshi/cent. Phase 3 (account-activity CSV) **dropped by owner
+> decision (2026-06-10)**: USD cash deposits are ~3 simple manual entries a
+> month — not worth a second adapter. Do not revive without being asked.
 > **Design decision (owner):** buy funding source is inherently a per-purchase
 > human choice — no predictor can be reliable, so the preview toggle IS the
 > mechanism, and heuristic defaults are best-effort only. Note the recurrence
@@ -133,10 +135,13 @@ warning list.
 
 1. **Backend** — adapter, heuristic, dedup, FMV helper, preview/execute
    endpoints, tests. (The useful core; can be exercised via curl before UI.)
-2. **Frontend** — preview/override UI.
-3. **Account-activity CSV** — USD deposits/withdrawals (needs a sample
-   export to spec the columns); may also disambiguate buy funding source,
-   making the heuristic obsolete for new imports.
+   ✅ Shipped in v0.7.0.
+2. **Frontend** — preview/override UI. ✅ Shipped in v0.7.0.
+3. ~~**Account-activity CSV** — USD deposits/withdrawals~~ **DROPPED**
+   (owner decision, 2026-06-10): cash deposits are a few trivial manual
+   entries per month; a second adapter isn't worth building or maintaining.
+   The funding-disambiguation benefit is moot — funding source is a
+   per-import human choice by design (see status note above).
 4. *(Future, optional)* generic adapter interface so other exchanges
    (Strike, Coinbase, Gemini…) are new adapters, not new pipelines.
 

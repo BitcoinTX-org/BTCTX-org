@@ -248,7 +248,7 @@ git push plebrick master --tags  # Sync backup at releases
    - 20 new tests (synthetic fixtures), suite now 184; validated against real 1,197-row export (100% coverage); real import reconciled to River balance to the satoshi
    - **User data privacy:** real CSV exports live locally in `docs/*.csv` — gitignored (generic pattern, no filenames leaked); NEVER commit or reference their contents in code/tests/docs
 2. **Annual IRS form update runbook**: `docs/IRS_ANNUAL_FORM_UPDATE.md` (committed on develop) — follow it step-by-step each year; replaced stale section in IRS_FORM_GENERATION.md
-3. Phase 3 pending: River account-activity CSV (USD deposits/withdrawals) — needs a sample export to spec columns
+3. Phase 3 (account-activity CSV) DROPPED by owner decision — USD cash deposits stay manual (~3 trivial entries/month, not worth a second adapter); do not revive unless asked
 4. Release note for later: River import = new feature → minor version bump (v0.7.0) when released
 
 ### Session: 2026-06-09/10 (2026 Modernization — branch `feature/2026-modernization`)
